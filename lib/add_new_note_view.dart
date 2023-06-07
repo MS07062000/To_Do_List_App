@@ -2,10 +2,11 @@
 
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:to_do_list_app/home_view.dart';
+import 'package:to_do_list_app/main.dart';
 import 'package:to_do_list_app/map_View.dart';
-import 'package:hive/hive.dart';
-import 'package:path_provider/path_provider.dart' as path_provider;
 import 'package:to_do_list_app/note_model.dart';
+import 'package:provider/provider.dart';
 
 class AddNewNoteView extends StatefulWidget {
   @override
@@ -206,6 +207,8 @@ class _AddNewNoteViewState extends State<AddNewNoteView> {
                         _textNoteController, _checkListController);
                     formKey.currentState!.reset();
                     //NAVIGATE TO HOMESCREEN IMMEDIATELY
+                    Provider.of<BottomNavBarProvider>(context, listen: false)
+                        .setCurrentIndex(0);
                     // Perform form submission or any other actions
                   }
                 },
