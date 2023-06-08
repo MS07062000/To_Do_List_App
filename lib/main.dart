@@ -58,6 +58,7 @@ class _MyHomePageState extends State<MyHomePage> {
       create: (context) => BottomNavBarProvider(),
       child: Scaffold(
         appBar: AppBar(
+          automaticallyImplyLeading: false,
           title: const Text('Note App'),
         ),
         body: Consumer<BottomNavBarProvider>(

@@ -1,12 +1,13 @@
 // ignore_for_file: library_private_types_in_public_api, use_key_in_widget_constructors
 
 import 'package:flutter/material.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:to_do_list_app/home_view.dart';
+import 'package:flutter_osm_plugin/flutter_osm_plugin.dart';
 import 'package:to_do_list_app/main.dart';
-import 'package:to_do_list_app/map_View.dart';
 import 'package:to_do_list_app/note_model.dart';
 import 'package:provider/provider.dart';
+import 'package:to_do_list_app/osm_map_view.dart';
+// import 'package:latlong2/latlong.dart';
+// import 'package:to_do_list_app/unknown_map_view.dart';
 
 class AddNewNoteView extends StatefulWidget {
   @override
@@ -34,13 +35,13 @@ class _AddNewNoteViewState extends State<AddNewNoteView> {
   }
 
   void _onDestinationTap() async {
-    final LatLng latLng = await Navigator.of(context).push(
+    GeoPoint latLng = await Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (context) => MapView(),
+        builder: (context) => OSMMapView(), //UnknownMapView(),
       ),
     );
     setState(() {
-      // _endpoint = '${latLng.latitude}, ${latLng.longitude}';
+      _destinationController.text = '${latLng.latitude}, ${latLng.longitude}';
     });
   }
 
@@ -67,153 +68,157 @@ class _AddNewNoteViewState extends State<AddNewNoteView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              TextFormField(
-                decoration: const InputDecoration(
-                  labelText: 'Destination',
-                  suffixIcon: Icon(Icons.map),
-                  border: OutlineInputBorder(),
-                ),
-                controller: _destinationController,
-                onTap: _onDestinationTap,
-                readOnly: true,
-              ),
-              const SizedBox(height: 16.0),
-              TextFormField(
-                  decoration: const InputDecoration(
-                    labelText: 'Title',
-                    border: OutlineInputBorder(),
-                  ),
-                  controller: _noteTitleController,
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'Please enter title';
-                    }
-                    return null;
-                  }),
-              const SizedBox(height: 16.0),
-              const Text(
-                'Select Type Of Note',
-                style: TextStyle(
-                  fontSize: 16.0,
-                  fontWeight: FontWeight.normal,
-                ),
-              ),
-              const SizedBox(height: 10.0),
-              Row(
-                children: [
-                  Expanded(
-                    child: RadioListTile(
-                      title: const Text('Text'),
-                      value: 'Text',
-                      groupValue: _noteType,
-                      onChanged: ((value) => _onNoteTypeChanged(value!)),
-                    ),
-                  ),
-                  Expanded(
-                    child: RadioListTile(
-                      title: const Text('CheckList'),
-                      value: 'CheckList',
-                      groupValue: _noteType,
-                      onChanged: ((value) => _onNoteTypeChanged(value!)),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16.0),
-              if (_noteType == 'Text')
+      resizeToAvoidBottomInset: true,
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Form(
+            key: formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
                 TextFormField(
-                  maxLines: null,
-                  minLines: 4,
-                  keyboardType: TextInputType.multiline,
                   decoration: const InputDecoration(
-                    labelText: 'Text Note',
+                    labelText: 'Destination',
+                    suffixIcon: Icon(Icons.map),
                     border: OutlineInputBorder(),
                   ),
-                  controller: _textNoteController,
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'Please fill text Note';
-                    }
-                    return null;
-                  },
-                )
-              else
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  controller: _destinationController,
+                  onTap: _onDestinationTap,
+                  readOnly: true,
+                ),
+                const SizedBox(height: 16.0),
+                TextFormField(
+                    decoration: const InputDecoration(
+                      labelText: 'Title',
+                      border: OutlineInputBorder(),
+                    ),
+                    controller: _noteTitleController,
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Please enter title';
+                      }
+                      return null;
+                    }),
+                const SizedBox(height: 16.0),
+                const Text(
+                  'Select Type Of Note',
+                  style: TextStyle(
+                    fontSize: 16.0,
+                    fontWeight: FontWeight.normal,
+                  ),
+                ),
+                const SizedBox(height: 10.0),
+                Row(
                   children: [
-                    for (int i = 0; i < _checklistItems.length; i++)
-                      Row(
-                        children: [
-                          SizedBox(
-                            width: MediaQuery.of(context).size.width * 0.88,
-                            child: TextFormField(
-                              controller: _checkListController[i],
-                              decoration: InputDecoration(
-                                labelText: 'Item ${i + 1}',
-                                border: const OutlineInputBorder(),
-                              ),
-                              validator: (value) {
-                                if (value == null || value.trim().isEmpty) {
-                                  return 'Please add Item';
-                                }
-                                return null;
-                              },
-                              onChanged: (value) {
-                                setState(() {
-                                  _checklistItems[i] = value;
-                                });
-                              },
-                            ),
-                          ),
-                          SizedBox(
-                              width: MediaQuery.of(context).size.width * 0.01),
-                          ButtonBar(
-                            alignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              IconButton(
-                                color: Colors.green,
-                                splashColor: Colors.green,
-                                splashRadius: 26,
-                                icon: const Icon(Icons.add),
-                                onPressed: _onAddChecklistItem,
-                              ),
-                              IconButton(
-                                color: Colors.red,
-                                splashColor: Colors.red,
-                                splashRadius: 26,
-                                icon: const Icon(Icons.remove),
-                                onPressed: () => _onRemoveChecklistItem(i),
-                              ),
-                            ],
-                          ),
-                        ],
+                    Expanded(
+                      child: RadioListTile(
+                        title: const Text('Text'),
+                        value: 'Text',
+                        groupValue: _noteType,
+                        onChanged: ((value) => _onNoteTypeChanged(value!)),
                       ),
+                    ),
+                    Expanded(
+                      child: RadioListTile(
+                        title: const Text('CheckList'),
+                        value: 'CheckList',
+                        groupValue: _noteType,
+                        onChanged: ((value) => _onNoteTypeChanged(value!)),
+                      ),
+                    ),
                   ],
                 ),
-              const SizedBox(height: 16.0),
-              ElevatedButton(
-                child: const Text('Create'),
-                onPressed: () {
-                  if (formKey.currentState!.validate()) {
-                    formKey.currentState!.save();
-                    _submitForm(_destinationController, _noteTitleController,
-                        _textNoteController, _checkListController);
-                    formKey.currentState!.reset();
-                    //NAVIGATE TO HOMESCREEN IMMEDIATELY
-                    Provider.of<BottomNavBarProvider>(context, listen: false)
-                        .setCurrentIndex(0);
-                    // Perform form submission or any other actions
-                  }
-                },
-              ),
-            ],
+                const SizedBox(height: 16.0),
+                if (_noteType == 'Text')
+                  TextFormField(
+                    maxLines: null,
+                    minLines: 4,
+                    keyboardType: TextInputType.multiline,
+                    decoration: const InputDecoration(
+                      labelText: 'Text Note',
+                      border: OutlineInputBorder(),
+                    ),
+                    controller: _textNoteController,
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Please fill text Note';
+                      }
+                      return null;
+                    },
+                  )
+                else
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      for (int i = 0; i < _checklistItems.length; i++)
+                        Row(
+                          children: [
+                            SizedBox(
+                              width: MediaQuery.of(context).size.width * 0.88,
+                              child: TextFormField(
+                                controller: _checkListController[i],
+                                decoration: InputDecoration(
+                                  labelText: 'Item ${i + 1}',
+                                  border: const OutlineInputBorder(),
+                                ),
+                                validator: (value) {
+                                  if (value == null || value.trim().isEmpty) {
+                                    return 'Please add Item';
+                                  }
+                                  return null;
+                                },
+                                onChanged: (value) {
+                                  setState(() {
+                                    _checklistItems[i] = value;
+                                  });
+                                },
+                              ),
+                            ),
+                            SizedBox(
+                                width:
+                                    MediaQuery.of(context).size.width * 0.01),
+                            ButtonBar(
+                              alignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                IconButton(
+                                  color: Colors.green,
+                                  splashColor: Colors.green,
+                                  splashRadius: 26,
+                                  icon: const Icon(Icons.add),
+                                  onPressed: _onAddChecklistItem,
+                                ),
+                                IconButton(
+                                  color: Colors.red,
+                                  splashColor: Colors.red,
+                                  splashRadius: 26,
+                                  icon: const Icon(Icons.remove),
+                                  onPressed: () => _onRemoveChecklistItem(i),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                    ],
+                  ),
+                const SizedBox(height: 16.0),
+                ElevatedButton(
+                  child: const Text('Create'),
+                  onPressed: () {
+                    if (formKey.currentState!.validate()) {
+                      formKey.currentState!.save();
+                      _submitForm(_destinationController, _noteTitleController,
+                          _textNoteController, _checkListController);
+                      formKey.currentState!.reset();
+                      //NAVIGATE TO HOMESCREEN IMMEDIATELY
+                      Provider.of<BottomNavBarProvider>(context, listen: false)
+                          .setCurrentIndex(0);
+                      // Perform form submission or any other actions
+                    }
+                  },
+                ),
+              ],
+            ),
           ),
         ),
       ),

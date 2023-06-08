@@ -1,12 +1,9 @@
-import 'dart:js';
-import 'dart:js_util';
+// ignore_for_file: library_private_types_in_public_api, use_key_in_widget_constructors
 
 import 'package:flutter/material.dart';
-import 'package:hive/hive.dart';
 import 'package:hive_flutter/adapters.dart';
 import 'package:path_provider/path_provider.dart' as path_provider;
-
-import 'note_view.dart';
+import 'package:to_do_list_app/note_content_page.dart';
 part 'note_model.g.dart';
 
 @HiveType(typeId: 0)
@@ -31,15 +28,29 @@ class NoteModel extends HiveObject {
   });
 }
 
+Future<void> initializeHive() async {
+  final appDocumentDir = await path_provider.getApplicationDocumentsDirectory();
+  Hive.init(appDocumentDir.path);
+}
+
+Future<void> registerHiveAdapters() async {
+  if (!isNoteModelRegistered()) {
+    Hive.registerAdapter(NoteModelAdapter());
+  }
+}
+
+bool isNoteModelRegistered() {
+  return Hive.isAdapterRegistered(0); //type Id is 0 in adapter
+}
+
 Future<void> insertNote({
   required String destination,
   required String notetitle,
   String? textnote,
   List<String>? checklist,
 }) async {
-  final appDocumentDir = await path_provider.getApplicationDocumentsDirectory();
-  Hive.init(appDocumentDir.path);
-  // await Hive.openBox<NoteModel>('notes');
+  await initializeHive();
+  await registerHiveAdapters();
 
   final noteBox = await Hive.openBox<NoteModel>('notes');
 
@@ -50,9 +61,8 @@ Future<void> insertNote({
     checklist: checklist,
   );
 
-  noteBox.add(note);
-
-  Hive.close();
+  print(note);
+  await noteBox.add(note);
 }
 
 // Future<void> deleteNote({
@@ -73,10 +83,29 @@ class NoteView extends StatefulWidget {
 }
 
 class _NoteViewState extends State<NoteView> {
+  Box<NoteModel>? noteBox; // Declare a reference to the Hive box
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      openHiveBox();
+    }); // Open the Hive box when the state is initialized
+  }
+
+  Future<void> openHiveBox() async {
+    initializeHive();
+    registerHiveAdapters();
+    final box = await Hive.openBox<NoteModel>('notes');
+    setState(() {
+      noteBox = box;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    return (ValueListenableBuilder(
-        valueListenable: Hive.box<NoteModel>('notes').listenable(),
+    return ValueListenableBuilder(
+        valueListenable: noteBox!.listenable(),
         builder: (context, Box<NoteModel> box, _) {
           if (box.values.isEmpty) {
             return const Center(
@@ -87,13 +116,13 @@ class _NoteViewState extends State<NoteView> {
               itemCount: box.values.length,
               itemBuilder: (context, index) {
                 NoteModel? currentNote = box.getAt(index);
-                buildNoteCard(currentNote!);
+                return buildNoteCard(context, currentNote!);
               });
-        }));
+        });
   }
 }
 
-Widget buildNoteCard(NoteModel note) {
+Widget buildNoteCard(BuildContext context, NoteModel note) {
   return Card(
     child: ListTile(
       leading: Text(note.notetitle),
@@ -119,23 +148,23 @@ Widget buildNoteCard(NoteModel note) {
             // Handle 'Edit' option
           } else if (value == 'delete') {
             // Handle 'Delete' option
-            deleteNote(context as BuildContext, note);
+            deleteNote(context, note);
           }
         },
       ),
       onTap: () {
         // Handle tap on note card
-        navigateToNoteView(note);
+        navigateToNoteView(context, note);
       },
     ),
   );
 }
 
-void navigateToNoteView(NoteModel note) {
+void navigateToNoteView(BuildContext context, NoteModel note) {
   Navigator.push(
-    context as BuildContext,
+    context,
     MaterialPageRoute(
-      builder: (context) => NoteViewPage(note: note),
+      builder: (context) => NoteContentPage(note: note),
     ),
   );
 }

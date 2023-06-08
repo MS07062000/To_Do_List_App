@@ -3,32 +3,35 @@
 import 'package:flutter/material.dart';
 import 'package:to_do_list_app/note_model.dart';
 
-class NoteViewPage extends StatelessWidget {
+class NoteContentPage extends StatelessWidget {
   final NoteModel note;
 
-  const NoteViewPage({required this.note});
+  const NoteContentPage({required this.note});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       appBar: AppBar(
         title: Text(note.notetitle),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Expanded(
-              child: buildNoteContent(),
-            ),
-            IconButton(
-              icon: const Icon(Icons.close),
-              onPressed: () {
-                Navigator.pop(context);
-              },
-            ),
-          ],
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(
+                child: buildNoteContent(),
+              ),
+              IconButton(
+                icon: const Icon(Icons.close),
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+              ),
+            ],
+          ),
         ),
       ),
     );
