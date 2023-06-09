@@ -154,8 +154,7 @@ class _AddNewNoteViewState extends State<AddNewNoteView> {
                       for (int i = 0; i < _checklistItems.length; i++)
                         Row(
                           children: [
-                            SizedBox(
-                              width: MediaQuery.of(context).size.width * 0.88,
+                            Expanded(
                               child: TextFormField(
                                 controller: _checkListController[i],
                                 decoration: InputDecoration(
@@ -175,27 +174,19 @@ class _AddNewNoteViewState extends State<AddNewNoteView> {
                                 },
                               ),
                             ),
-                            SizedBox(
-                                width:
-                                    MediaQuery.of(context).size.width * 0.01),
-                            ButtonBar(
-                              alignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                IconButton(
-                                  color: Colors.green,
-                                  splashColor: Colors.green,
-                                  splashRadius: 26,
-                                  icon: const Icon(Icons.add),
-                                  onPressed: _onAddChecklistItem,
-                                ),
-                                IconButton(
-                                  color: Colors.red,
-                                  splashColor: Colors.red,
-                                  splashRadius: 26,
-                                  icon: const Icon(Icons.remove),
-                                  onPressed: () => _onRemoveChecklistItem(i),
-                                ),
-                              ],
+                            IconButton(
+                              color: Colors.green,
+                              splashColor: Colors.green,
+                              splashRadius: 26,
+                              icon: const Icon(Icons.add),
+                              onPressed: _onAddChecklistItem,
+                            ),
+                            IconButton(
+                              color: Colors.red,
+                              splashColor: Colors.red,
+                              splashRadius: 26,
+                              icon: const Icon(Icons.remove),
+                              onPressed: () => _onRemoveChecklistItem(i),
                             ),
                           ],
                         ),

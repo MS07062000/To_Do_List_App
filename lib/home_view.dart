@@ -5,6 +5,6 @@ import 'package:to_do_list_app/note_model.dart';
 class HomeView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(child: NoteView());
+    return NoteView();
   }
 }

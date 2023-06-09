@@ -83,42 +83,59 @@ class NoteView extends StatefulWidget {
 }
 
 class _NoteViewState extends State<NoteView> {
-  Box<NoteModel>? noteBox; // Declare a reference to the Hive box
+  bool isLoading = true;
+  late Box<NoteModel> noteBox; // Declare a reference to the Hive box
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      openHiveBox();
-    }); // Open the Hive box when the state is initialized
+    openHiveBox(); // Open the Hive box when the state is initialized
   }
 
   Future<void> openHiveBox() async {
-    initializeHive();
+    await initializeHive();
     registerHiveAdapters();
     final box = await Hive.openBox<NoteModel>('notes');
     setState(() {
       noteBox = box;
+      isLoading = false;
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    return ValueListenableBuilder(
-        valueListenable: noteBox!.listenable(),
-        builder: (context, Box<NoteModel> box, _) {
-          if (box.values.isEmpty) {
-            return const Center(
-              child: Text("No Notes"),
-            );
-          }
-          return ListView.builder(
-              itemCount: box.values.length,
-              itemBuilder: (context, index) {
-                NoteModel? currentNote = box.getAt(index);
-                return buildNoteCard(context, currentNote!);
-              });
-        });
+    // if (noteBox == null) {
+    //   return const Center(
+    //     child: CircularProgressIndicator(),
+    //   );
+    // }
+
+    return isLoading
+        ? const Center(child: CircularProgressIndicator())
+        : Column(
+            children: [
+              Expanded(
+                child: ValueListenableBuilder<Box<NoteModel>>(
+                  valueListenable: noteBox.listenable(),
+                  builder: (context, box, _) {
+                    if (box.values.isEmpty) {
+                      return const Center(
+                        child: Text("No Notes"),
+                      );
+                    }
+
+                    return ListView.builder(
+                      itemCount: box.length,
+                      itemBuilder: (context, index) {
+                        NoteModel currentNote = box.getAt(index)!;
+                        return buildNoteCard(context, currentNote);
+                      },
+                    );
+                  },
+                ),
+              ),
+            ],
+          );
   }
 }
 
