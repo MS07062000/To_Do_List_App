@@ -20,11 +20,12 @@ class _AddNewNoteViewState extends State<AddNewNoteView> {
   final TextEditingController _noteTitleController = TextEditingController();
   final TextEditingController _textNoteController = TextEditingController();
   final List<TextEditingController> _checkListController = [
+    TextEditingController(),
     TextEditingController()
   ];
   String _noteType = 'Text';
-  final List<String> _checklistItems = [''];
-
+  final List<String> _checklistItems = ['', ''];
+  final ScrollController _scrollController = ScrollController();
   @override
   void dispose() {
     // Clean up the controller when the widget is disposed.
@@ -70,6 +71,7 @@ class _AddNewNoteViewState extends State<AddNewNoteView> {
     return Scaffold(
       resizeToAvoidBottomInset: true,
       body: SingleChildScrollView(
+        controller: _scrollController,
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Form(
@@ -148,50 +150,7 @@ class _AddNewNoteViewState extends State<AddNewNoteView> {
                     },
                   )
                 else
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      for (int i = 0; i < _checklistItems.length; i++)
-                        Row(
-                          children: [
-                            Expanded(
-                              child: TextFormField(
-                                controller: _checkListController[i],
-                                decoration: InputDecoration(
-                                  labelText: 'Item ${i + 1}',
-                                  border: const OutlineInputBorder(),
-                                ),
-                                validator: (value) {
-                                  if (value == null || value.trim().isEmpty) {
-                                    return 'Please add Item';
-                                  }
-                                  return null;
-                                },
-                                onChanged: (value) {
-                                  setState(() {
-                                    _checklistItems[i] = value;
-                                  });
-                                },
-                              ),
-                            ),
-                            IconButton(
-                              color: Colors.green,
-                              splashColor: Colors.green,
-                              splashRadius: 26,
-                              icon: const Icon(Icons.add),
-                              onPressed: _onAddChecklistItem,
-                            ),
-                            IconButton(
-                              color: Colors.red,
-                              splashColor: Colors.red,
-                              splashRadius: 26,
-                              icon: const Icon(Icons.remove),
-                              onPressed: () => _onRemoveChecklistItem(i),
-                            ),
-                          ],
-                        ),
-                    ],
-                  ),
+                  _buildChecklistItems(_scrollController),
                 const SizedBox(height: 16.0),
                 ElevatedButton(
                   child: const Text('Create'),
@@ -213,6 +172,63 @@ class _AddNewNoteViewState extends State<AddNewNoteView> {
           ),
         ),
       ),
+    );
+  }
+
+  ListView _buildChecklistItems(parentScrollController) {
+    return ListView.builder(
+      controller: parentScrollController,
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: (_checklistItems.length < 2) ? 2 : _checklistItems.length,
+      itemBuilder: (context, index) {
+        if (index < _checklistItems.length) {
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextFormField(
+                    controller: _checkListController[index],
+                    decoration: InputDecoration(
+                      labelText: 'Item ${index + 1}',
+                      border: const OutlineInputBorder(),
+                    ),
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Please add Item';
+                      }
+                      return null;
+                    },
+                    onChanged: (value) {
+                      setState(() {
+                        _checklistItems[index] = value;
+                      });
+                    },
+                  ),
+                ),
+                if (index == _checklistItems.length - 1)
+                  IconButton(
+                    color: Colors.green,
+                    splashColor: Colors.green,
+                    splashRadius: 26,
+                    icon: const Icon(Icons.add),
+                    onPressed: _onAddChecklistItem,
+                  ),
+                if (_checklistItems.length > 2)
+                  IconButton(
+                    color: Colors.red,
+                    splashColor: Colors.red,
+                    splashRadius: 26,
+                    icon: const Icon(Icons.remove),
+                    onPressed: () => _onRemoveChecklistItem(index),
+                  ),
+              ],
+            ),
+          );
+        }
+        return null;
+      },
     );
   }
 }

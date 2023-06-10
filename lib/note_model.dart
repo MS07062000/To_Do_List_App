@@ -61,7 +61,6 @@ Future<void> insertNote({
     checklist: checklist,
   );
 
-  print(note);
   await noteBox.add(note);
 }
 
