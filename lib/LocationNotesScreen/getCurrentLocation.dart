@@ -28,13 +28,18 @@ Future<bool> locationPermissionAndServicesEnabled() async {
 }
 
 Future<Position> getCurrentLocation(context) async {
-  if (!await locationPermissionAndServicesEnabled()) {
+  bool locationPermissionAndServicesStatus =
+      await locationPermissionAndServicesEnabled();
+  if (!locationPermissionAndServicesStatus) {
     showPopUp(context);
   }
   // Get the current position
   Position position;
   try {
-    position = await Geolocator.getCurrentPosition();
+    position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+        timeLimit: const Duration(seconds: 10));
+    return position;
   } catch (e) {
     position = Position(
       latitude: 0,
@@ -46,8 +51,8 @@ Future<Position> getCurrentLocation(context) async {
       speedAccuracy: 0,
       timestamp: DateTime.now(),
     );
+    return position;
   }
-  return position;
 }
 
 void showPopUp(context) async {

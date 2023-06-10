@@ -14,7 +14,8 @@ class LocationNoteView extends StatefulWidget {
 class _LocationNoteViewState extends State<LocationNoteView> {
   bool isLoading = true;
   late Box<NoteModel> noteBox; // Declare a reference to the Hive box
-  late Position currentLocation;
+  late Future<Position> currentLocation;
+
   @override
   void initState() {
     super.initState();
@@ -29,26 +30,47 @@ class _LocationNoteViewState extends State<LocationNoteView> {
       noteBox = box;
       // isLoading = false;
     });
+    await getLocation();
   }
 
-  Future<void> getLocation(Future<Position> location) async {
+  Future<void> getLocation() async {
     setState(() {
-      currentLocation = location as Position;
-      isLoading = true;
+      currentLocation = getCurrentLocation(context);
+      isLoading = false;
+      print(isLoading);
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    getLocation(getCurrentLocation(context));
-    return isLoading
-        ? const Center(child: CircularProgressIndicator())
-        : Column(
+    // if (isLoading) {
+    //   return const Center(child: CircularProgressIndicator());
+    // }
+
+    // if (currentLocation.latitude == 0.0 && currentLocation!.longitude == 0.0) {
+    //   return const Center(
+    //       child: Text(
+    //           'Please enable both location services and permissions to use this feature.'));
+    // }
+    return FutureBuilder<Position>(
+      future: currentLocation,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        } else if (snapshot.hasError) {
+          return Center(child: Text('Error occurred: ${snapshot.error}'));
+        } else if (snapshot.data == null ||
+            snapshot.data!.latitude == 0.0 && snapshot.data!.longitude == 0.0) {
+          return const Center(
+              child: Text(
+                  'Please enable both location services and permissions to use this feature.'));
+        } else {
+          return Column(
             children: [
               Expanded(
                 child: ValueListenableBuilder<List<NoteModel>>(
-                  valueListenable:
-                      findNotesFromDestination(noteBox, currentLocation, 1000),
+                  valueListenable: findNotesFromDestination(
+                      noteBox, snapshot.data!, 1000.00),
                   builder: (context, list, _) {
                     if (list.isEmpty) {
                       return const Center(
@@ -60,7 +82,10 @@ class _LocationNoteViewState extends State<LocationNoteView> {
                       itemCount: list.length,
                       itemBuilder: (context, index) {
                         NoteModel currentNote = list[index];
-                        return buildNoteCard(context, currentNote);
+                        return Padding(
+                            padding: const EdgeInsets.only(
+                                left: 8.0, right: 8.0, top: 4.0, bottom: 4.0),
+                            child: buildNoteCard(context, currentNote));
                       },
                     );
                   },
@@ -68,6 +93,9 @@ class _LocationNoteViewState extends State<LocationNoteView> {
               ),
             ],
           );
+        }
+      },
+    );
   }
 }
 

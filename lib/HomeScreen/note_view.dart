@@ -50,7 +50,10 @@ class _NoteViewState extends State<NoteView> {
                       itemCount: box.length,
                       itemBuilder: (context, index) {
                         NoteModel currentNote = box.getAt(index)!;
-                        return buildNoteCard(context, currentNote);
+                        return Padding(
+                            padding: const EdgeInsets.only(
+                                left: 8.0, right: 8.0, top: 4.0, bottom: 4.0),
+                            child: buildNoteCard(context, currentNote));
                       },
                     );
                   },

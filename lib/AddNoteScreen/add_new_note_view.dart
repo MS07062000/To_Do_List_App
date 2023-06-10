@@ -5,9 +5,9 @@ import 'package:flutter_osm_plugin/flutter_osm_plugin.dart';
 import 'package:to_do_list_app/main.dart';
 import 'package:to_do_list_app/Database/note_model.dart';
 import 'package:provider/provider.dart';
-// import 'package:to_do_list_app/Map/osm_map_view.dart';
-import 'package:latlong2/latlong.dart';
-import 'package:to_do_list_app/Map/unknown_map_view.dart';
+import 'package:to_do_list_app/Map/osm_map_view.dart';
+// import 'package:latlong2/latlong.dart';
+// import 'package:to_do_list_app/Map/unknown_map_view.dart';
 
 class AddNewNoteView extends StatefulWidget {
   @override
@@ -36,9 +36,9 @@ class _AddNewNoteViewState extends State<AddNewNoteView> {
   }
 
   void _onDestinationTap() async {
-    LatLng latLng = await Navigator.of(context).push(
+    GeoPoint latLng = await Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (context) => UnknownMapView(),
+        builder: (context) => OSMMapView(), //UnknownMapView(),
       ),
     );
     setState(() {

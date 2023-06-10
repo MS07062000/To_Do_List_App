@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:to_do_list_app/AddNoteScreen/add_new_note_view.dart';
 import 'package:to_do_list_app/HomeScreen/home_view.dart';
-import 'package:to_do_list_app/LocationNotesScreen/location_notes_view.dart';
+import 'package:to_do_list_app/LocationNotesScreen/location_view.dart';
 import 'package:to_do_list_app/TrashScreen/trash_view.dart';
 
 void main() {
@@ -15,12 +15,6 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      initialRoute: '/home',
-      routes: {
-        '/home': (context) => MyHomePage(),
-        '/addNewNote': (context) => AddNewNoteView(),
-        // '/trash' : (context)=>
-      },
       title: 'Note App',
       theme: ThemeData(
         primarySwatch: Colors.blue,
@@ -49,9 +43,9 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   final List<Widget> _screens = [
     HomeView(),
-    LocationNoteView(),
+    LocationView(),
     AddNewNoteView(),
-    TrashView(),
+    TrashView()
   ];
 
   @override
@@ -71,6 +65,7 @@ class _MyHomePageState extends State<MyHomePage> {
         bottomNavigationBar: Consumer<BottomNavBarProvider>(
           builder: (context, bottomNavBarProvider, child) {
             return BottomNavigationBar(
+              type: BottomNavigationBarType.fixed,
               currentIndex: bottomNavBarProvider.currentIndex,
               onTap: (index) {
                 bottomNavBarProvider.setCurrentIndex(index);
