@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:to_do_list_app/note_model.dart';
+import 'package:to_do_list_app/HomeScreen/note_view.dart';
 
 // ignore: use_key_in_widget_constructors
 class HomeView extends StatelessWidget {

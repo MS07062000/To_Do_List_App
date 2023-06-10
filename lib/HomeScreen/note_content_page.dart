@@ -1,12 +1,12 @@
 // ignore_for_file: use_key_in_widget_constructors
 
 import 'package:flutter/material.dart';
-import 'package:to_do_list_app/note_model.dart';
+import 'package:to_do_list_app/Database/note_model.dart';
 
 class NoteContentPage extends StatelessWidget {
   final NoteModel note;
-
-  const NoteContentPage({required this.note});
+  NoteContentPage({required this.note});
+  final ScrollController _scrollController = ScrollController();
 
   @override
   Widget build(BuildContext context) {
@@ -16,14 +16,13 @@ class NoteContentPage extends StatelessWidget {
         title: Text(note.notetitle),
       ),
       body: SingleChildScrollView(
+        controller: _scrollController,
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Expanded(
-                child: buildNoteContent(),
-              ),
+              buildNoteContent(_scrollController),
               IconButton(
                 icon: const Icon(Icons.close),
                 onPressed: () {
@@ -37,18 +36,30 @@ class NoteContentPage extends StatelessWidget {
     );
   }
 
-  Widget buildNoteContent() {
+  Widget buildNoteContent(parentScrollController) {
     if (note.textnote != null) {
       // Single string note
-      return Text(note.textnote!);
+      return Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Text(note.textnote!),
+      );
     } else if (note.checklist != null) {
       // Array of notes
       return ListView.builder(
+        controller: parentScrollController,
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
         itemCount: note.checklist!.length,
         itemBuilder: (context, index) {
-          return ListTile(
-            title: Text(note.checklist![index]),
-          );
+          return Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: ListTile(
+                shape: RoundedRectangleBorder(
+                  side: const BorderSide(color: Colors.purple, width: 1),
+                  borderRadius: BorderRadius.circular(5),
+                ),
+                title: Text(note.checklist![index]),
+              ));
         },
       );
     } else {

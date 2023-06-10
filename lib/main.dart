@@ -2,9 +2,10 @@
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:to_do_list_app/add_new_note_view.dart';
-import 'package:to_do_list_app/home_View.dart';
-import 'package:to_do_list_app/trash_view.dart';
+import 'package:to_do_list_app/AddNoteScreen/add_new_note_view.dart';
+import 'package:to_do_list_app/HomeScreen/home_view.dart';
+import 'package:to_do_list_app/LocationNotesScreen/location_notes_view.dart';
+import 'package:to_do_list_app/TrashScreen/trash_view.dart';
 
 void main() {
   runApp(MyApp());
@@ -48,6 +49,7 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   final List<Widget> _screens = [
     HomeView(),
+    LocationNoteView(),
     AddNewNoteView(),
     TrashView(),
   ];
@@ -77,6 +79,10 @@ class _MyHomePageState extends State<MyHomePage> {
                 BottomNavigationBarItem(
                   icon: Icon(Icons.home),
                   label: 'Home',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.location_on),
+                  label: 'Location Notes',
                 ),
                 BottomNavigationBarItem(
                   icon: Icon(Icons.add),
