@@ -13,8 +13,8 @@ class LocationNoteView extends StatefulWidget {
 
 class _LocationNoteViewState extends State<LocationNoteView> {
   bool isLoading = true;
-  late Box<NoteModel> noteBox; // Declare a reference to the Hive box
-  late Future<Position> currentLocation;
+  Box<NoteModel>? noteBox; // Declare a reference to the Hive box
+  Future<Position>? currentLocation;
 
   @override
   void initState() {
@@ -37,7 +37,7 @@ class _LocationNoteViewState extends State<LocationNoteView> {
     setState(() {
       currentLocation = getCurrentLocation(context);
       isLoading = false;
-      print(isLoading);
+      // print(isLoading);
     });
   }
 
@@ -70,7 +70,7 @@ class _LocationNoteViewState extends State<LocationNoteView> {
               Expanded(
                 child: ValueListenableBuilder<List<NoteModel>>(
                   valueListenable: findNotesFromDestination(
-                      noteBox, snapshot.data!, 1000.00),
+                      noteBox!, snapshot.data!, 1000.00),
                   builder: (context, list, _) {
                     if (list.isEmpty) {
                       return const Center(
