@@ -61,3 +61,25 @@ Future<void> insertNote({
 
   await noteBox.add(note);
 }
+
+Future<void> updateNote({
+  required int noteIndex,
+  required String destination,
+  required String notetitle,
+  String? textnote,
+  List<String>? checklist,
+}) async {
+  await initializeHive();
+  await registerHiveAdapters();
+
+  final noteBox = await Hive.openBox<NoteModel>('notes');
+
+  final note = NoteModel(
+    destination: destination,
+    notetitle: notetitle,
+    textnote: textnote,
+    checklist: checklist,
+  );
+
+  await noteBox.putAt(noteIndex, note);
+}

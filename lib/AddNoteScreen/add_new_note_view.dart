@@ -1,5 +1,3 @@
-// ignore_for_file: library_private_types_in_public_api, use_key_in_widget_constructors
-
 import 'package:flutter/material.dart';
 import 'package:flutter_osm_plugin/flutter_osm_plugin.dart';
 import 'package:to_do_list_app/main.dart';
@@ -10,6 +8,10 @@ import 'package:to_do_list_app/Map/osm_map_view.dart';
 // import 'package:to_do_list_app/Map/unknown_map_view.dart';
 
 class AddNewNoteView extends StatefulWidget {
+  final NoteModel? note;
+  final int? noteIndex;
+  const AddNewNoteView({Key? key, this.noteIndex, this.note}) : super(key: key);
+
   @override
   _AddNewNoteViewState createState() => _AddNewNoteViewState();
 }
@@ -19,13 +21,43 @@ class _AddNewNoteViewState extends State<AddNewNoteView> {
   final TextEditingController _destinationController = TextEditingController();
   final TextEditingController _noteTitleController = TextEditingController();
   final TextEditingController _textNoteController = TextEditingController();
-  final List<TextEditingController> _checkListController = [
-    TextEditingController(),
-    TextEditingController()
-  ];
+  final List<TextEditingController> _checkListController = [];
   String _noteType = 'Text';
-  final List<String> _checklistItems = ['', ''];
+  final List<String> _checklistItems = [];
   final ScrollController _scrollController = ScrollController();
+  @override
+  void initState() {
+    super.initState();
+    if (widget.note != null) {
+      // Initialize the form fields with the values from the existing note
+      _destinationController.text = widget.note!.destination;
+      _noteTitleController.text = widget.note!.notetitle;
+      if (widget.note!.textnote != null) {
+        _textNoteController.text = widget.note!.textnote!;
+      }
+
+      if (widget.note!.checklist != null) {
+        _checklistItems.addAll(widget.note!.checklist!);
+        _checkListController.addAll(List.generate(
+          widget.note!.checklist!.length,
+          (_) => TextEditingController(),
+        ));
+        for (int i = 0; i < widget.note!.checklist!.length; i++) {
+          _checkListController[i].text = widget.note!.checklist![i];
+        }
+        _noteType = 'CheckList';
+      } else {
+        _checkListController
+            .addAll([TextEditingController(), TextEditingController()]);
+        _checklistItems.addAll(['', '']);
+      }
+    } else {
+      _checkListController
+          .addAll([TextEditingController(), TextEditingController()]);
+      _checklistItems.addAll(['', '']);
+    }
+  }
+
   @override
   void dispose() {
     // Clean up the controller when the widget is disposed.
@@ -153,17 +185,39 @@ class _AddNewNoteViewState extends State<AddNewNoteView> {
                   _buildChecklistItems(_scrollController),
                 const SizedBox(height: 16.0),
                 ElevatedButton(
-                  child: const Text('Create'),
+                  child: widget.note != null
+                      ? const Text('Update')
+                      : const Text('Create'),
                   onPressed: () {
                     if (formKey.currentState!.validate()) {
                       formKey.currentState!.save();
-                      _submitForm(_destinationController, _noteTitleController,
-                          _textNoteController, _checkListController);
+                      if (widget.note != null && widget.noteIndex != null) {
+                        _submitForm(
+                            false,
+                            widget.noteIndex!,
+                            _destinationController,
+                            _noteTitleController,
+                            _noteType,
+                            _textNoteController,
+                            _checkListController);
+                      } else {
+                        _submitForm(
+                            true,
+                            -1,
+                            _destinationController,
+                            _noteTitleController,
+                            _noteType,
+                            _textNoteController,
+                            _checkListController);
+                      }
                       formKey.currentState!.reset();
-                      //NAVIGATE TO HOMESCREEN IMMEDIATELY
-                      Provider.of<BottomNavBarProvider>(context, listen: false)
-                          .setCurrentIndex(0);
-                      // Perform form submission or any other actions
+                      if (widget.note != null) {
+                        Navigator.pop(context);
+                      } else {
+                        Provider.of<BottomNavBarProvider>(context,
+                                listen: false)
+                            .setCurrentIndex(0);
+                      }
                     }
                   },
                 ),
@@ -242,18 +296,64 @@ List<String> extractTextFromControllers(
   return texts;
 }
 
-void _submitForm(destination, noteTitle, textNote, checkList) {
+void _submitForm(
+    bool create,
+    int noteIndex,
+    TextEditingController destination,
+    TextEditingController noteTitle,
+    String noteType,
+    TextEditingController textNote,
+    List<TextEditingController> checkList) {
 //add data to localstorage
+  if (create) {
+    _insertNote(destination, noteTitle, noteType, textNote, checkList);
+  } else {
+    _updateNote(
+        noteIndex, destination, noteTitle, noteType, textNote, checkList);
+  }
+}
+
+void _insertNote(
+    TextEditingController destination,
+    TextEditingController noteTitle,
+    String noteType,
+    TextEditingController textNote,
+    List<TextEditingController> checkList) {
   List<String> checkListNote = extractTextFromControllers(checkList);
-  if (checkListNote[0].isNotEmpty) {
+  if (noteType == 'CheckList' && checkListNote[0].isNotEmpty) {
     insertNote(
         destination: destination.text.toString(),
         notetitle: noteTitle.text.toString(),
         checklist: checkListNote);
   }
 
-  if (textNote.text.toString().isNotEmpty) {
+  if (noteType == 'Text' && textNote.text.toString().isNotEmpty) {
     insertNote(
+        destination: destination.text.toString(),
+        notetitle: noteTitle.text.toString(),
+        textnote: textNote.text.toString());
+  }
+}
+
+void _updateNote(
+    int noteIndex,
+    TextEditingController destination,
+    TextEditingController noteTitle,
+    String noteType,
+    TextEditingController textNote,
+    List<TextEditingController> checkList) {
+  List<String> checkListNote = extractTextFromControllers(checkList);
+  if (noteType == 'CheckList' && checkListNote[0].isNotEmpty) {
+    updateNote(
+        noteIndex: noteIndex,
+        destination: destination.text.toString(),
+        notetitle: noteTitle.text.toString(),
+        checklist: checkListNote);
+  }
+
+  if (noteType == 'Text' && textNote.text.toString().isNotEmpty) {
+    updateNote(
+        noteIndex: noteIndex,
         destination: destination.text.toString(),
         notetitle: noteTitle.text.toString(),
         textnote: textNote.text.toString());

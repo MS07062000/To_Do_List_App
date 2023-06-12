@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/adapters.dart';
+import 'package:to_do_list_app/HomeScreen/edit_note_view.dart';
 import 'package:to_do_list_app/HomeScreen/note_content_page.dart';
 import '../Database/note_model.dart';
 
@@ -53,7 +54,7 @@ class _NoteViewState extends State<NoteView> {
                         return Padding(
                             padding: const EdgeInsets.only(
                                 left: 8.0, right: 8.0, top: 4.0, bottom: 4.0),
-                            child: buildNoteCard(context, currentNote));
+                            child: buildNoteCard(context, index, currentNote));
                       },
                     );
                   },
@@ -64,7 +65,7 @@ class _NoteViewState extends State<NoteView> {
   }
 }
 
-Widget buildNoteCard(BuildContext context, NoteModel note) {
+Widget buildNoteCard(BuildContext context, int noteIndex, NoteModel note) {
   return Card(
     child: ListTile(
       shape: RoundedRectangleBorder(
@@ -86,6 +87,7 @@ Widget buildNoteCard(BuildContext context, NoteModel note) {
         onSelected: (value) {
           if (value == 'edit') {
             // Handle 'Edit' option
+            navigateToNoteEdit(context, noteIndex, note);
           } else if (value == 'delete') {
             // Handle 'Delete' option
             deleteNote(context, note);
@@ -105,6 +107,15 @@ void navigateToNoteView(BuildContext context, NoteModel note) {
     context,
     MaterialPageRoute(
       builder: (context) => NoteContentPage(note: note),
+    ),
+  );
+}
+
+void navigateToNoteEdit(BuildContext context, int noteIndex, NoteModel note) {
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (context) => EditNoteView(noteIndex: noteIndex, note: note),
     ),
   );
 }
