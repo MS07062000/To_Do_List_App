@@ -3,12 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:hive_flutter/adapters.dart';
 import 'package:to_do_list_app/HomeScreen/note_content_page.dart';
-import 'package:to_do_list_app/LocationNotesScreen/getCurrentLocation.dart';
+import 'package:to_do_list_app/LocationNotesScreen/get_current_location.dart';
 import '../Database/note_model.dart';
 
 class LocationNoteView extends StatefulWidget {
+  const LocationNoteView({super.key});
+
   @override
-  _LocationNoteViewState createState() => _LocationNoteViewState();
+  State<LocationNoteView> createState() => _LocationNoteViewState();
 }
 
 class _LocationNoteViewState extends State<LocationNoteView> {
@@ -189,9 +191,9 @@ void deleteNote(BuildContext context, NoteModel note) {
           TextButton(
             child: const Text("Yes"),
             onPressed: () async {
+              final navigator = Navigator.of(context);
               await Hive.box<NoteModel>('notes').delete(note.key);
-              // ignore: use_build_context_synchronously
-              Navigator.of(context).pop();
+              navigator.pop();
             },
           ),
         ],

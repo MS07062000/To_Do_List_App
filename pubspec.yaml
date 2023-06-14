@@ -47,6 +47,8 @@ dependencies:
   url_launcher: ^6.1.11
   flutter_osm_plugin: ^0.55.1
   pointer_interceptor: ^0.9.3+4
+  flutter_local_notifications: ^14.1.1
+  vibration: ^1.7.7
 
 dev_dependencies:
   flutter_test:

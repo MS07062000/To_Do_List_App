@@ -1,5 +1,3 @@
-// ignore_for_file: use_key_in_widget_constructors, library_private_types_in_public_api
-
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
@@ -7,8 +5,10 @@ import 'package:latlong2/latlong.dart';
 // import 'package:url_launcher/url_launcher.dart';
 
 class UnknownMapView extends StatefulWidget {
+  const UnknownMapView({super.key});
+
   @override
-  _UnknownMapViewState createState() => _UnknownMapViewState();
+  State<UnknownMapView> createState() => _UnknownMapViewState();
 }
 
 class _UnknownMapViewState extends State<UnknownMapView> {
@@ -81,8 +81,10 @@ class _UnknownMapViewState extends State<UnknownMapView> {
 }
 
 class StartTravel extends StatefulWidget {
+  const StartTravel({super.key});
+
   @override
-  _StartTravelState createState() => _StartTravelState();
+  State<StartTravel> createState() => _StartTravelState();
 }
 
 class _StartTravelState extends State<StartTravel> {

@@ -1,11 +1,9 @@
-// ignore_for_file: use_key_in_widget_constructors
-
 import 'package:flutter/material.dart';
 import 'package:to_do_list_app/Database/note_model.dart';
 
 class NoteContentPage extends StatelessWidget {
   final NoteModel note;
-  NoteContentPage({required this.note});
+  NoteContentPage({super.key, required this.note});
   final ScrollController _scrollController = ScrollController();
 
   @override

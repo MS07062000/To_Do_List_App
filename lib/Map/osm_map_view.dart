@@ -1,4 +1,3 @@
-// ignore_for_file: use_key_in_widget_constructors, library_private_types_in_public_api
 //for iOS,you should add those line in your info.plist file
 //  <key>NSLocationWhenInUseUsageDescription</key>
 // <string>any text you want</string>
@@ -12,8 +11,10 @@ import 'package:flutter_osm_plugin/flutter_osm_plugin.dart';
 import 'package:pointer_interceptor/pointer_interceptor.dart';
 
 class OSMMapView extends StatefulWidget {
+  const OSMMapView({super.key});
+
   @override
-  _OSMMapViewState createState() => _OSMMapViewState();
+  State<OSMMapView> createState() => _OSMMapViewState();
 }
 
 class _OSMMapViewState extends State<OSMMapView> {
@@ -21,6 +22,27 @@ class _OSMMapViewState extends State<OSMMapView> {
   late PickerMapController pickerMapController = PickerMapController(
     initMapWithUserPosition: const UserTrackingOption(),
   );
+  @override
+  void initState() {
+    super.initState();
+    textEditingController.addListener(textOnChanged);
+  }
+
+  void textOnChanged() {
+    pickerMapController.setSearchableText(textEditingController.text);
+  }
+
+  void onSelectedFromDropDownUpdateSearchTextField(String address) {
+    setState(() {
+      textEditingController.text = address;
+    });
+  }
+
+  @override
+  void dispose() {
+    textEditingController.removeListener(textOnChanged);
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -87,7 +109,8 @@ class _OSMMapViewState extends State<OSMMapView> {
             const SizedBox(
               height: 8,
             ),
-            TopSearchWidget()
+            TopSearchWidget(
+                onPlaceTapped: onSelectedFromDropDownUpdateSearchTextField)
           ],
         ),
       ),
@@ -99,7 +122,9 @@ class _OSMMapViewState extends State<OSMMapView> {
             onPressed: () async {
               GeoPoint p =
                   await pickerMapController.selectAdvancedPositionPicker();
-              Navigator.of(context).pop(p);
+              if (context.mounted) {
+                Navigator.of(context).pop(p);
+              }
             },
             child: const Icon(Icons.arrow_forward),
           ),
@@ -113,6 +138,8 @@ class _OSMMapViewState extends State<OSMMapView> {
 }
 
 class TopSearchWidget extends StatefulWidget {
+  final Function(String) onPlaceTapped;
+  const TopSearchWidget({super.key, required this.onPlaceTapped});
   @override
   State<StatefulWidget> createState() => _TopSearchWidgetState();
 }
@@ -214,13 +241,17 @@ class _TopSearchWidgetState extends State<TopSearchWidget> {
                       controller.goToLocation(
                         snap.data![index].point!,
                       );
+                      // widget
+                      //     .onPlaceTapped(snap.data![index].address.toString());
 
                       /// hide suggestion card
                       notifierAutoCompletion.value = false;
                       await reInitStream();
-                      FocusScope.of(context).requestFocus(
-                        FocusNode(),
-                      );
+                      if (context.mounted) {
+                        FocusScope.of(context).requestFocus(
+                          FocusNode(),
+                        );
+                      }
                     },
                   ),
                 );

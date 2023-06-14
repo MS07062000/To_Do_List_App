@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of '../Database/note_model.dart';
+part of 'note_model.dart';
 
 // **************************************************************************
 // TypeAdapterGenerator
@@ -21,13 +21,15 @@ class NoteModelAdapter extends TypeAdapter<NoteModel> {
       notetitle: fields[1] as String,
       textnote: fields[2] as String?,
       checklist: (fields[3] as List?)?.cast<String>(),
+      isRead: fields[4] as bool,
+      isDelete: fields[5] as bool,
     );
   }
 
   @override
   void write(BinaryWriter writer, NoteModel obj) {
     writer
-      ..writeByte(4)
+      ..writeByte(6)
       ..writeByte(0)
       ..write(obj.destination)
       ..writeByte(1)
@@ -35,7 +37,11 @@ class NoteModelAdapter extends TypeAdapter<NoteModel> {
       ..writeByte(2)
       ..write(obj.textnote)
       ..writeByte(3)
-      ..write(obj.checklist);
+      ..write(obj.checklist)
+      ..writeByte(4)
+      ..write(obj.isRead)
+      ..writeByte(5)
+      ..write(obj.isDelete);
   }
 
   @override

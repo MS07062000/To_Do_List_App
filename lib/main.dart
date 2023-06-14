@@ -1,17 +1,18 @@
-// ignore_for_file: use_key_in_widget_constructors, library_private_types_in_public_api
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:to_do_list_app/AddNoteScreen/add_new_note_view.dart';
+import 'package:to_do_list_app/Database/note_model.dart';
 import 'package:to_do_list_app/HomeScreen/home_view.dart';
 import 'package:to_do_list_app/LocationNotesScreen/location_view.dart';
 import 'package:to_do_list_app/TrashScreen/trash_view.dart';
 
 void main() {
-  runApp(MyApp());
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -19,7 +20,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: MyHomePage(),
+      home: const MyHomePage(),
     );
   }
 }
@@ -36,16 +37,18 @@ class BottomNavBarProvider with ChangeNotifier {
 }
 
 class MyHomePage extends StatefulWidget {
+  const MyHomePage({super.key});
+
   @override
-  _MyHomePageState createState() => _MyHomePageState();
+  State<MyHomePage> createState() => _MyHomePageState();
 }
 
 class _MyHomePageState extends State<MyHomePage> {
   final List<Widget> _screens = [
-    HomeView(),
-    LocationView(),
-    AddNewNoteView(),
-    TrashView()
+    const HomeView(),
+    const LocationView(),
+    const AddNewNoteView(),
+    const TrashView()
   ];
 
   @override
@@ -56,6 +59,16 @@ class _MyHomePageState extends State<MyHomePage> {
         appBar: AppBar(
           automaticallyImplyLeading: false,
           title: const Text('Note App'),
+          actions: BottomNavBarProvider().currentIndex == 3
+              ? [
+                  IconButton(
+                    icon: const Icon(Icons.delete),
+                    onPressed: () {
+                      deletePermanentlyTheDeletedNotes(context);
+                    },
+                  ),
+                ]
+              : null,
         ),
         body: Consumer<BottomNavBarProvider>(
           builder: (context, bottomNavBarProvider, child) {
@@ -92,6 +105,33 @@ class _MyHomePageState extends State<MyHomePage> {
           },
         ),
       ),
+    );
+  }
+
+  void deletePermanentlyTheDeletedNotes(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          content: const Text(
+            "Do you want to delete all notes permanently?",
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text("No"),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+            TextButton(
+              child: const Text("Yes"),
+              onPressed: () async {
+                final navigator = Navigator.of(context);
+                await deleteAllPermanently();
+                navigator.pop();
+              },
+            ),
+          ],
+        );
+      },
     );
   }
 }

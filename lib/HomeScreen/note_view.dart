@@ -7,8 +7,10 @@ import 'package:to_do_list_app/HomeScreen/note_content_page.dart';
 import '../Database/note_model.dart';
 
 class NoteView extends StatefulWidget {
+  const NoteView({super.key});
+
   @override
-  _NoteViewState createState() => _NoteViewState();
+  State<NoteView> createState() => _NoteViewState();
 }
 
 class _NoteViewState extends State<NoteView> {
@@ -90,7 +92,7 @@ Widget buildNoteCard(BuildContext context, int noteIndex, NoteModel note) {
             navigateToNoteEdit(context, noteIndex, note);
           } else if (value == 'delete') {
             // Handle 'Delete' option
-            deleteNote(context, note);
+            deleteNote(context, noteIndex, note);
           }
         },
       ),
@@ -120,7 +122,7 @@ void navigateToNoteEdit(BuildContext context, int noteIndex, NoteModel note) {
   );
 }
 
-void deleteNote(BuildContext context, NoteModel note) {
+void deleteNote(BuildContext context, int noteIndex, NoteModel note) {
   showDialog(
     context: context,
     builder: (BuildContext context) {
@@ -136,9 +138,15 @@ void deleteNote(BuildContext context, NoteModel note) {
           TextButton(
             child: const Text("Yes"),
             onPressed: () async {
-              await Hive.box<NoteModel>('notes').delete(note.key);
-              // ignore: use_build_context_synchronously
-              Navigator.of(context).pop();
+              final navigator = Navigator.of(context);
+              await updateNote(
+                  noteIndex: noteIndex,
+                  destination: note.destination,
+                  notetitle: note.notetitle,
+                  isRead: note.isRead,
+                  isDelete: true);
+              // await Hive.box<NoteModel>('notes').delete(note.key);
+              navigator.pop();
             },
           ),
         ],

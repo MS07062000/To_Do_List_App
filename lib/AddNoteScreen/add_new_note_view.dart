@@ -13,7 +13,7 @@ class AddNewNoteView extends StatefulWidget {
   const AddNewNoteView({Key? key, this.noteIndex, this.note}) : super(key: key);
 
   @override
-  _AddNewNoteViewState createState() => _AddNewNoteViewState();
+  State<AddNewNoteView> createState() => _AddNewNoteViewState();
 }
 
 class _AddNewNoteViewState extends State<AddNewNoteView> {
@@ -70,7 +70,7 @@ class _AddNewNoteViewState extends State<AddNewNoteView> {
   void _onDestinationTap() async {
     GeoPoint latLng = await Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (context) => OSMMapView(), //UnknownMapView(),
+        builder: (context) => const OSMMapView(), //UnknownMapView(),
       ),
     );
     setState(() {
@@ -322,9 +322,10 @@ void _insertNote(
   List<String> checkListNote = extractTextFromControllers(checkList);
   if (noteType == 'CheckList' && checkListNote[0].isNotEmpty) {
     insertNote(
-        destination: destination.text.toString(),
-        notetitle: noteTitle.text.toString(),
-        checklist: checkListNote);
+      destination: destination.text.toString(),
+      notetitle: noteTitle.text.toString(),
+      checklist: checkListNote,
+    );
   }
 
   if (noteType == 'Text' && textNote.text.toString().isNotEmpty) {
@@ -336,26 +337,29 @@ void _insertNote(
 }
 
 void _updateNote(
-    int noteIndex,
-    TextEditingController destination,
-    TextEditingController noteTitle,
-    String noteType,
-    TextEditingController textNote,
-    List<TextEditingController> checkList) {
+  int noteIndex,
+  TextEditingController destination,
+  TextEditingController noteTitle,
+  String noteType,
+  TextEditingController textNote,
+  List<TextEditingController> checkList,
+) {
   List<String> checkListNote = extractTextFromControllers(checkList);
   if (noteType == 'CheckList' && checkListNote[0].isNotEmpty) {
     updateNote(
-        noteIndex: noteIndex,
-        destination: destination.text.toString(),
-        notetitle: noteTitle.text.toString(),
-        checklist: checkListNote);
+      noteIndex: noteIndex,
+      destination: destination.text.toString(),
+      notetitle: noteTitle.text.toString(),
+      checklist: checkListNote,
+    );
   }
 
   if (noteType == 'Text' && textNote.text.toString().isNotEmpty) {
     updateNote(
-        noteIndex: noteIndex,
-        destination: destination.text.toString(),
-        notetitle: noteTitle.text.toString(),
-        textnote: textNote.text.toString());
+      noteIndex: noteIndex,
+      destination: destination.text.toString(),
+      notetitle: noteTitle.text.toString(),
+      textnote: textNote.text.toString(),
+    );
   }
 }
