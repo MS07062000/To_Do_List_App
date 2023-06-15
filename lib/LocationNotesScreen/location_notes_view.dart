@@ -61,9 +61,14 @@ class _LocationNoteViewState extends State<LocationNoteView> {
           return const Center(child: CircularProgressIndicator());
         } else if (snapshot.hasError) {
           return Center(child: Text('Error occurred: ${snapshot.error}'));
-        } else if (snapshot.data == null ||
-            snapshot.data!.latitude == 0.0 && snapshot.data!.longitude == 0.0) {
-          return const Center(
+        } else if (snapshot.data == null) {
+          return const Padding(
+              padding: EdgeInsets.all(2.0),
+              child: Text('No Notes Available for this Location'));
+        } else if (snapshot.data!.latitude == 0.0 &&
+            snapshot.data!.longitude == 0.0) {
+          return const Padding(
+              padding: EdgeInsets.all(2.0),
               child: Text(
                   'Please enable both location services and permissions to use this feature.'));
         } else {
@@ -158,7 +163,7 @@ ValueNotifier<List<NoteModel>> findNotesFromDestination(
     );
 
     // Filter the notes within the maximum distance
-    return distanceInMeters <= maxDistance;
+    return distanceInMeters <= maxDistance && !note.isDelete;
   }).toList();
 
   // Perform further operations with the filtered notes

@@ -9,8 +9,8 @@ import 'package:to_do_list_app/Map/osm_map_view.dart';
 
 class AddNewNoteView extends StatefulWidget {
   final NoteModel? note;
-  final int? noteIndex;
-  const AddNewNoteView({Key? key, this.noteIndex, this.note}) : super(key: key);
+  final dynamic noteKey;
+  const AddNewNoteView({Key? key, this.noteKey, this.note}) : super(key: key);
 
   @override
   State<AddNewNoteView> createState() => _AddNewNoteViewState();
@@ -191,10 +191,10 @@ class _AddNewNoteViewState extends State<AddNewNoteView> {
                   onPressed: () {
                     if (formKey.currentState!.validate()) {
                       formKey.currentState!.save();
-                      if (widget.note != null && widget.noteIndex != null) {
+                      if (widget.note != null && widget.noteKey != null) {
                         _submitForm(
                             false,
-                            widget.noteIndex!,
+                            widget.noteKey!,
                             _destinationController,
                             _noteTitleController,
                             _noteType,
@@ -285,81 +285,85 @@ class _AddNewNoteViewState extends State<AddNewNoteView> {
       },
     );
   }
-}
 
-List<String> extractTextFromControllers(
-    List<TextEditingController> controllers) {
-  List<String> texts = [];
-  for (TextEditingController controller in controllers) {
-    texts.add(controller.text.trim());
+  List<String> extractTextFromControllers(
+      List<TextEditingController> controllers) {
+    List<String> texts = [];
+    for (TextEditingController controller in controllers) {
+      texts.add(controller.text.trim());
+    }
+    return texts;
   }
-  return texts;
-}
 
-void _submitForm(
-    bool create,
-    int noteIndex,
-    TextEditingController destination,
-    TextEditingController noteTitle,
-    String noteType,
-    TextEditingController textNote,
-    List<TextEditingController> checkList) {
+  void _submitForm(
+      bool create,
+      dynamic noteKey,
+      TextEditingController destination,
+      TextEditingController noteTitle,
+      String noteType,
+      TextEditingController textNote,
+      List<TextEditingController> checkList) {
 //add data to localstorage
-  if (create) {
-    _insertNote(destination, noteTitle, noteType, textNote, checkList);
-  } else {
-    _updateNote(
-        noteIndex, destination, noteTitle, noteType, textNote, checkList);
-  }
-}
-
-void _insertNote(
-    TextEditingController destination,
-    TextEditingController noteTitle,
-    String noteType,
-    TextEditingController textNote,
-    List<TextEditingController> checkList) {
-  List<String> checkListNote = extractTextFromControllers(checkList);
-  if (noteType == 'CheckList' && checkListNote[0].isNotEmpty) {
-    insertNote(
-      destination: destination.text.toString(),
-      notetitle: noteTitle.text.toString(),
-      checklist: checkListNote,
-    );
+    if (create) {
+      _insertNote(destination, noteTitle, noteType, textNote, checkList);
+    } else {
+      _updateNote(
+          noteKey, destination, noteTitle, noteType, textNote, checkList);
+    }
   }
 
-  if (noteType == 'Text' && textNote.text.toString().isNotEmpty) {
-    insertNote(
+  void _insertNote(
+      TextEditingController destination,
+      TextEditingController noteTitle,
+      String noteType,
+      TextEditingController textNote,
+      List<TextEditingController> checkList) {
+    List<String> checkListNote = extractTextFromControllers(checkList);
+    if (noteType == 'CheckList' && checkListNote[0].isNotEmpty) {
+      insertNote(
         destination: destination.text.toString(),
         notetitle: noteTitle.text.toString(),
-        textnote: textNote.text.toString());
-  }
-}
+        checklist: checkListNote,
+      );
+    }
 
-void _updateNote(
-  int noteIndex,
-  TextEditingController destination,
-  TextEditingController noteTitle,
-  String noteType,
-  TextEditingController textNote,
-  List<TextEditingController> checkList,
-) {
-  List<String> checkListNote = extractTextFromControllers(checkList);
-  if (noteType == 'CheckList' && checkListNote[0].isNotEmpty) {
-    updateNote(
-      noteIndex: noteIndex,
-      destination: destination.text.toString(),
-      notetitle: noteTitle.text.toString(),
-      checklist: checkListNote,
-    );
+    if (noteType == 'Text' && textNote.text.toString().isNotEmpty) {
+      insertNote(
+          destination: destination.text.toString(),
+          notetitle: noteTitle.text.toString(),
+          textnote: textNote.text.toString());
+    }
   }
 
-  if (noteType == 'Text' && textNote.text.toString().isNotEmpty) {
-    updateNote(
-      noteIndex: noteIndex,
-      destination: destination.text.toString(),
-      notetitle: noteTitle.text.toString(),
-      textnote: textNote.text.toString(),
-    );
+  void _updateNote(
+    dynamic noteKey,
+    TextEditingController destination,
+    TextEditingController noteTitle,
+    String noteType,
+    TextEditingController textNote,
+    List<TextEditingController> checkList,
+  ) {
+    List<String> checkListNote = extractTextFromControllers(checkList);
+    if (noteType == 'CheckList' && checkListNote[0].isNotEmpty) {
+      updateNote(
+        noteKey: noteKey,
+        destination: destination.text.toString(),
+        notetitle: noteTitle.text.toString(),
+        checklist: checkListNote,
+        isDelete: false,
+        isRead: false,
+      );
+    }
+
+    if (noteType == 'Text' && textNote.text.toString().isNotEmpty) {
+      updateNote(
+        noteKey: noteKey,
+        destination: destination.text.toString(),
+        notetitle: noteTitle.text.toString(),
+        textnote: textNote.text.toString(),
+        isDelete: false,
+        isRead: false,
+      );
+    }
   }
 }

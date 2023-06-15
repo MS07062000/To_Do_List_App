@@ -12,10 +12,10 @@ class TrashView extends StatefulWidget {
 
 class _TrashViewState extends State<TrashView> {
   bool isLoading = true;
-  late List<NoteModel> notesList;
-  late ValueNotifier<List<NoteModel>> notesListNotifier;
+  late Map<dynamic, NoteModel> notesMap;
+  late ValueNotifier<Map<dynamic, NoteModel>> notesMapNotifier;
   List<bool> selectedItems = [];
-  List<int> noteIndexes = [];
+  List<dynamic> notesKeys = [];
   @override
   void initState() {
     super.initState();
@@ -23,22 +23,22 @@ class _TrashViewState extends State<TrashView> {
   }
 
   Future<void> getDeletedData() async {
-    notesList = await getDeletedNotes();
+    notesMap = await getDeletedNotes();
     setState(() {
-      notesListNotifier = ValueNotifier<List<NoteModel>>(notesList);
-      selectedItems = List.filled(notesList.length, false);
+      notesMapNotifier = ValueNotifier<Map<dynamic, NoteModel>>(notesMap);
+      selectedItems = List.filled(notesMap.length, false);
       isLoading = false;
     });
   }
 
   Future<void> deleteSelectedItems() async {
-    await deleteAllSelectedNote(noteIndexes);
+    await deleteAllSelectedNote(notesKeys);
     isLoading = true;
     await getDeletedData();
   }
 
   Future<void> reAddSelectedItems() async {
-    await reAddAllSelectedNote(noteIndexes);
+    await reAddAllSelectedNote(notesKeys);
     isLoading = true;
     await getDeletedData();
   }
@@ -51,47 +51,65 @@ class _TrashViewState extends State<TrashView> {
             children: [
               // add one search bar here
               if (selectedItems.contains(true))
-                Row(
-                  children: [
-                    const Text("Select any one?"),
-                    TextButton(
-                      onPressed: () {
-                        setState(() async {
-                          // Perform readd operation on selected items
-                          await deleteSelectedItems();
-                        });
-                      },
-                      child: const Text('Readd'),
-                    ),
-                    TextButton(
-                      onPressed: () {
-                        setState(() async {
-                          // Perform delete operation on selected items
-                          await reAddSelectedItems();
-                        });
-                      },
-                      child: const Text('Delete'),
-                    ),
-                  ],
+                Padding(
+                  padding: const EdgeInsets.all(4.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Text("Select any one?"),
+                      Padding(
+                        padding: const EdgeInsets.all(4.0),
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.green[900],
+                            foregroundColor: Colors.white,
+                          ),
+                          onPressed: () {
+                            // Perform readd operation on selected items
+                            showDialogForReaddOrDelete(context, true);
+                          },
+                          child: const Text('Readd'),
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.all(4.0),
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor:
+                                Colors.red, // background (button) color
+                            foregroundColor:
+                                Colors.white, // foreground (text) color
+                          ),
+                          onPressed: () {
+                            // Perform delete operation on selected items
+                            showDialogForReaddOrDelete(context, false);
+                          },
+                          child: const Text('Delete'),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               Expanded(
-                child: ValueListenableBuilder<List<NoteModel>>(
-                  valueListenable: notesListNotifier,
-                  builder: (context, notesList, _) {
-                    if (notesList.isEmpty) {
+                child: ValueListenableBuilder<Map<dynamic, NoteModel>>(
+                  valueListenable: notesMapNotifier,
+                  builder: (context, notesMap, _) {
+                    if (notesMap.isEmpty) {
                       return const Center(
                         child: Text("No Notes"),
                       );
                     }
 
                     return ListView.builder(
-                      itemCount: notesList.length,
+                      itemCount: notesMap.length,
                       itemBuilder: (context, index) {
-                        NoteModel currentNote = notesList[index];
+                        int key = notesMap.keys.elementAt(index);
+                        NoteModel currentNote = notesMap[key]!;
                         return Padding(
                             padding: const EdgeInsets.only(
                                 left: 8.0, right: 8.0, top: 4.0, bottom: 4.0),
-                            child: buildNoteCard(context, index, currentNote));
+                            child: buildNoteCard(
+                                context, index, key, currentNote));
                       },
                     );
                   },
@@ -101,7 +119,8 @@ class _TrashViewState extends State<TrashView> {
           );
   }
 
-  Widget buildNoteCard(BuildContext context, int noteIndex, NoteModel note) {
+  Widget buildNoteCard(
+      BuildContext context, int noteIndex, dynamic noteKey, NoteModel note) {
     return Card(
       child: ListTile(
         shape: RoundedRectangleBorder(
@@ -115,10 +134,10 @@ class _TrashViewState extends State<TrashView> {
             setState(() {
               selectedItems[noteIndex] = value ?? false;
               if (selectedItems[noteIndex] == true) {
-                noteIndexes.add(noteIndex);
+                notesKeys.add(noteKey);
               } else {
-                if (noteIndexes.contains(noteIndex)) {
-                  noteIndexes.remove(noteIndex);
+                if (notesKeys.contains(noteKey)) {
+                  notesKeys.remove(noteKey);
                 }
               }
             });

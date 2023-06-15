@@ -71,7 +71,7 @@ Future<void> insertNote({
 }
 
 Future<void> updateNote({
-  required int noteIndex,
+  required dynamic noteKey,
   required String destination,
   required String notetitle,
   String? textnote,
@@ -91,91 +91,103 @@ Future<void> updateNote({
       checklist: checklist,
       isRead: isRead ?? false,
       isDelete: isDelete ?? false);
+  print(noteBox.keys.length);
+  print(noteKey);
+  print(noteBox.containsKey(noteKey));
 
-  await noteBox.putAt(noteIndex, note);
+  await noteBox.putAt(noteKey, note);
 }
 
-Future<List<NoteModel>> getUnreadNotes() async {
+Future<Map<dynamic, NoteModel>> getUnreadNotes() async {
   await initializeHive();
   await registerHiveAdapters();
 
   final noteBox = await Hive.openBox<NoteModel>('notes');
 
-  List<NoteModel> notes = [];
+  Map<dynamic, NoteModel> notesMap = {};
   for (int i = 0; i < noteBox.length; i++) {
-    final note = noteBox.getAt(i) as NoteModel;
-    if (!note.isRead && !note.isDelete) {
-      notes.add(note);
+    NoteModel? note = noteBox.getAt(i);
+    if (!note!.isRead && !note.isDelete) {
+      notesMap[note.key] = note;
     }
   }
 
-  return notes;
+  return notesMap;
 }
 
-Future<List<NoteModel>> getDeletedNotes() async {
+Future<Map<dynamic, NoteModel>> getDeletedNotes() async {
   await initializeHive();
   await registerHiveAdapters();
 
   final noteBox = await Hive.openBox<NoteModel>('notes');
 
-  List<NoteModel> notes = [];
+  Map<dynamic, NoteModel> notesMap = {};
   for (int i = 0; i < noteBox.length; i++) {
-    final note = noteBox.getAt(i) as NoteModel;
-    if (note.isDelete) {
-      notes.add(note);
+    NoteModel? note = noteBox.getAt(i);
+    if (note!.isDelete) {
+      notesMap[note.key] = note;
     }
   }
 
-  return notes;
+  return notesMap;
 }
 
-Future<List<NoteModel>> deleteAllPermanently() async {
+Future<void> deleteAllPermanently() async {
   await initializeHive();
   await registerHiveAdapters();
 
   final noteBox = await Hive.openBox<NoteModel>('notes');
-  List<NoteModel> notes = [];
   for (int i = 0; i < noteBox.length; i++) {
-    final note = noteBox.getAt(i) as NoteModel;
-    if (note.isDelete) {
-      notes.add(note);
+    NoteModel? note = noteBox.getAt(i);
+    if (note!.isDelete) {
+      noteBox.deleteAt(i);
     }
   }
-
-  return notes;
 }
 
-Future<void> deleteAllSelectedNote(List<int> noteIndexes) async {
+Future<void> deleteAllSelectedNote(List<dynamic> noteKey) async {
   await initializeHive();
   await registerHiveAdapters();
 
   final noteBox = await Hive.openBox<NoteModel>('notes');
-  await noteBox.deleteAll(noteIndexes);
+  await noteBox.deleteAll(noteKey);
 }
 
-Future<void> reAddAllSelectedNote(List<int> noteIndexes) async {
+Future<void> reAddAllSelectedNote(List<dynamic> noteKeys) async {
   await initializeHive();
   await registerHiveAdapters();
 
   final noteBox = await Hive.openBox<NoteModel>('notes');
-  for (int noteIndex in noteIndexes) {
-    NoteModel? note = noteBox.getAt(noteIndex);
+  for (int i = 0; i < noteKeys.length; i++) {
+    NoteModel? note = noteBox.get(noteKeys[i]);
     if (note!.textnote != null) {
       await updateNote(
-          noteIndex: noteIndex,
+          noteKey: noteKeys[i],
           destination: note.destination,
-          notetitle: note.destination,
+          notetitle: note.notetitle,
           textnote: note.textnote,
           isRead: false,
           isDelete: false);
     } else {
       await updateNote(
-          noteIndex: noteIndex,
+          noteKey: noteKeys[i],
           destination: note.destination,
-          notetitle: note.destination,
+          notetitle: note.notetitle,
           checklist: note.checklist,
           isRead: false,
           isDelete: false);
     }
+  }
+}
+
+Future<void> setDeleteOfAllSelectedNote(List<dynamic> noteKeys) async {
+  await initializeHive();
+  await registerHiveAdapters();
+
+  final noteBox = await Hive.openBox<NoteModel>('notes');
+  for (final noteKey in noteKeys) {
+    NoteModel? note = noteBox.get(noteKey);
+    note!.isDelete = true;
+    await noteBox.put(noteKey, note);
   }
 }

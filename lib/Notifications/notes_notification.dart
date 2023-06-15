@@ -48,8 +48,8 @@ class LocationNotificationHelper {
   }
 
   void checkLocationZoneAndNotifyNotes(Position currentPosition) async {
-    List<NoteModel> notes = await getUnreadNotes();
-    for (NoteModel note in notes) {
+    Map<dynamic, NoteModel> notes = await getUnreadNotes();
+    notes.forEach((noteKey, note) {
       double targetLatitude = double.parse(note.destination.split(',')[0]);
       double targetLongitude = double.parse(note.destination.split(',')[1]);
 
@@ -70,7 +70,7 @@ class LocationNotificationHelper {
         showNotification(note);
         vibrateDevice();
       }
-    }
+    });
   }
 
   void showNotification(NoteModel note) async {
