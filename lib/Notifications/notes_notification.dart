@@ -48,8 +48,8 @@ class LocationNotificationHelper {
   }
 
   void checkLocationZoneAndNotifyNotes(Position currentPosition) async {
-    Map<dynamic, NoteModel> notes = await getUnreadNotes();
-    notes.forEach((noteKey, note) {
+    List<NoteModel> notes = await getUnreadNotes();
+    notes.forEach((note) {
       double targetLatitude = double.parse(note.destination.split(',')[0]);
       double targetLongitude = double.parse(note.destination.split(',')[1]);
 

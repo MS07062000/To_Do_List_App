@@ -99,34 +99,34 @@ Future<void> updateNote({
   await noteBox.putAt(noteKey, note);
 }
 
-Future<Map<dynamic, NoteModel>> getUnreadNotes() async {
+Future<List<NoteModel>> getUnreadNotes() async {
   await initializeHive();
   await registerHiveAdapters();
 
   final noteBox = await Hive.openBox<NoteModel>('notes');
 
-  Map<dynamic, NoteModel> notesMap = {};
+  List<NoteModel> notesMap = [];
   for (int i = 0; i < noteBox.length; i++) {
     NoteModel? note = noteBox.getAt(i);
     if (!note!.isRead && !note.isDelete) {
-      notesMap[note.key] = note;
+      notesMap.add(note);
     }
   }
 
   return notesMap;
 }
 
-Future<Map<dynamic, NoteModel>> getDeletedNotes() async {
+Future<List<NoteModel>> getDeletedNotes() async {
   await initializeHive();
   await registerHiveAdapters();
 
   final noteBox = await Hive.openBox<NoteModel>('notes');
 
-  Map<dynamic, NoteModel> notesMap = {};
+  List<NoteModel> notesMap = [];
   for (int i = 0; i < noteBox.length; i++) {
     NoteModel? note = noteBox.getAt(i);
     if (note!.isDelete) {
-      notesMap[note.key] = note;
+      notesMap.add(note);
     }
   }
 

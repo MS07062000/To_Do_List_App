@@ -17,13 +17,14 @@ class LocationNoteView extends StatefulWidget {
 
 class _LocationNoteViewState extends State<LocationNoteView> {
   // bool isLoading = true;
-  // Box<NoteModel>? noteBox; // Declare a reference to the Hive box
-  // Future<Position>? currentLocation;
+  bool selectAll = false;
   List<bool> selectedItems = [];
   List<dynamic> notesKeys = [];
   final currentLocationValue = ValueNotifier<Position?>(null);
   ValueNotifier<List<NoteModel>> notesNotifier =
       ValueNotifier<List<NoteModel>>([]);
+  TextEditingController searchController = TextEditingController();
+  List<NoteModel> filteredNotes = [];
 
   @override
   void initState() {
@@ -88,20 +89,98 @@ class _LocationNoteViewState extends State<LocationNoteView> {
         } else {
           return Column(
             children: [
+              if (notesNotifier.value.isNotEmpty) ...[
+                Row(
+                  children: [
+                    Expanded(
+                      child: Padding(
+                        padding:
+                            const EdgeInsets.fromLTRB(10.0, 5.0, 10.0, 5.0),
+                        child: TextField(
+                          controller: searchController,
+                          onChanged: (value) {
+                            setState(() {
+                              filteredNotes = notesNotifier.value
+                                  .where((note) => note.notetitle
+                                      .toLowerCase()
+                                      .contains(value.toLowerCase()))
+                                  .toList();
+                            });
+                          },
+                          decoration: const InputDecoration(
+                            labelText: 'Search Notes',
+                            border: OutlineInputBorder(),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                if (selectedItems.contains(true))
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Padding(
+                          padding:
+                              const EdgeInsets.fromLTRB(10.0, 5.0, 10.0, 5.0),
+                          child: CheckboxListTile(
+                            controlAffinity: ListTileControlAffinity.leading,
+                            title: const Text('Select All'),
+                            value:
+                                selectedItems.every((isSelected) => isSelected),
+                            onChanged: (value) {
+                              setState(() {
+                                selectedItems = List.filled(
+                                    notesNotifier.value.length, value ?? false);
+                                // selectAll = value ?? false;
+                                // if (selectAll) {
+                                //   selectedItems = List.filled(
+                                //       notesNotifier.value.length, value ?? false);
+                                // } else {
+                                //   selectedItems = List.filled(
+                                //       notesNotifier.value.length, false);
+                                // }
+                                // notesNotifier.value.forEach((note) {
+                                // if (!notesKeys.contains(note.key)) {
+                                //   notesKeys.add(note.key);
+                                // }
+                                //   });
+                                // } else {
+                                //    notesKeys.clear();
+                                // }
+                              });
+                            },
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+              ],
               Expanded(
                 child: ValueListenableBuilder<List<NoteModel>>(
                   valueListenable: notesNotifier,
                   builder: (context, list, _) {
+                    List<NoteModel> displayedNotes =
+                        searchController.text.isEmpty ? list : filteredNotes;
+
                     if (list.isEmpty) {
                       return const Center(
                         child: Text("No Notes Available for this Location"),
                       );
                     }
 
+                    if (displayedNotes.isEmpty) {
+                      return const Center(
+                        child: Text(
+                          'No notes found as per the input entered by you.',
+                        ),
+                      );
+                    }
+
                     return ListView.builder(
-                      itemCount: list.length,
+                      itemCount: displayedNotes.length,
                       itemBuilder: (context, index) {
-                        NoteModel currentNote = list[index];
+                        NoteModel currentNote = displayedNotes[index];
                         return Padding(
                             padding: const EdgeInsets.only(
                                 left: 8.0, right: 8.0, top: 4.0, bottom: 4.0),
@@ -187,6 +266,32 @@ class _LocationNoteViewState extends State<LocationNoteView> {
     return Color.fromARGB(255, r, g, b);
   }
 }
+
+
+
+
+ //   if (notesNotifier.value.isNotEmpty) ...[
+              //     CheckboxListTile(
+              //       controlAffinity: ListTileControlAffinity.leading,
+              //       title: const Text('Select All'),
+              //       value: selectedItems.every((isSelected) => isSelected),
+              //       onChanged: (value) {
+              //         setState(() {
+              //           selectedItems = List.filled(
+              //               notesNotifier.value.length, value ?? false);
+              //         });
+              //       },
+              //     ),
+              //   ],
+
+
+
+
+
+
+
+
+
 
 // void deleteNote(BuildContext context, NoteModel note) {
 //   showDialog(

@@ -16,9 +16,12 @@ class NoteView extends StatefulWidget {
 
 class NoteViewState extends State<NoteView> {
   bool isLoading = true;
-  late ValueNotifier<Map<dynamic, NoteModel>> notesMapNotifier;
+  late ValueNotifier<List<NoteModel>> notesNotifier;
   List<bool> selectedItems = [];
   List<dynamic> notesKeys = [];
+  TextEditingController searchController = TextEditingController();
+
+  List<NoteModel> filteredNotes = [];
   @override
   void initState() {
     super.initState();
@@ -54,9 +57,8 @@ class NoteViewState extends State<NoteView> {
   }
 
   Future<void> getNotes() async {
-    notesMapNotifier =
-        ValueNotifier<Map<dynamic, NoteModel>>(await getUnreadNotes());
-    selectedItems = List.filled(notesMapNotifier.value.length, false);
+    notesNotifier = ValueNotifier<List<NoteModel>>(await getUnreadNotes());
+    selectedItems = List.filled(notesNotifier.value.length, false);
     setState(() {
       isLoading = false;
     });
@@ -68,30 +70,102 @@ class NoteViewState extends State<NoteView> {
         ? const Center(child: CircularProgressIndicator())
         : Column(
             children: [
+              if (notesNotifier.value.isNotEmpty) ...[
+                Row(
+                  children: [
+                    Expanded(
+                      child: Padding(
+                        padding:
+                            const EdgeInsets.fromLTRB(10.0, 5.0, 10.0, 5.0),
+                        child: TextField(
+                          controller: searchController,
+                          onChanged: (value) {
+                            setState(() {
+                              filteredNotes = notesNotifier.value
+                                  .where((note) => note.notetitle
+                                      .toLowerCase()
+                                      .contains(value.toLowerCase()))
+                                  .toList();
+                            });
+                          },
+                          decoration: const InputDecoration(
+                            labelText: 'Search Notes',
+                            border: OutlineInputBorder(),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                if (selectedItems.contains(true))
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Padding(
+                          padding:
+                              const EdgeInsets.fromLTRB(10.0, 5.0, 10.0, 5.0),
+                          child: CheckboxListTile(
+                            controlAffinity: ListTileControlAffinity.leading,
+                            title: const Text('Select All'),
+                            value:
+                                selectedItems.every((isSelected) => isSelected),
+                            onChanged: (value) {
+                              setState(() {
+                                selectedItems = List.filled(
+                                    notesNotifier.value.length, value ?? false);
+                                // selectAll = value ?? false;
+                                // if (selectAll) {
+                                //   selectedItems = List.filled(
+                                //       notesNotifier.value.length, value ?? false);
+                                // } else {
+                                //   selectedItems = List.filled(
+                                //       notesNotifier.value.length, false);
+                                // }
+                                // notesNotifier.value.forEach((note) {
+                                // if (!notesKeys.contains(note.key)) {
+                                //   notesKeys.add(note.key);
+                                // }
+                                //   });
+                                // } else {
+                                //    notesKeys.clear();
+                                // }
+                              });
+                            },
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+              ],
               Expanded(
-                child: ValueListenableBuilder<Map<dynamic, NoteModel>>(
-                  valueListenable: notesMapNotifier,
-                  builder: (context, notesMap, _) {
-                    if (notesMap.isEmpty) {
+                child: ValueListenableBuilder<List<NoteModel>>(
+                  valueListenable: notesNotifier,
+                  builder: (context, notes, _) {
+                    List<NoteModel> displayedNotes =
+                        searchController.text.isEmpty ? notes : filteredNotes;
+
+                    if (notes.isEmpty) {
                       return const Center(
                         child: Text("No Notes"),
                       );
                     }
 
-                    return Consumer<BottomNavBarProvider>(
-                      builder: (context, bottomNavBarProvider, child) {
-                        return ListView.builder(
-                          itemCount: notesMap.length,
-                          itemBuilder: (context, index) {
-                            dynamic key = notesMap.keys.elementAt(index);
-                            NoteModel currentNote = notesMap[key]!;
-                            return Padding(
-                              padding: const EdgeInsets.only(
-                                  left: 8.0, right: 8.0, top: 4.0, bottom: 4.0),
-                              child: buildNoteCard(
-                                  context, index, key, currentNote),
-                            );
-                          },
+                    if (displayedNotes.isEmpty) {
+                      return const Center(
+                        child: Text(
+                          'No notes found as per the input entered by you.',
+                        ),
+                      );
+                    }
+
+                    return ListView.builder(
+                      itemCount: displayedNotes.length,
+                      itemBuilder: (context, index) {
+                        NoteModel currentNote = displayedNotes[index];
+                        return Padding(
+                          padding: const EdgeInsets.only(
+                              left: 8.0, right: 8.0, top: 4.0, bottom: 4.0),
+                          child: buildNoteCard(context, index, currentNote),
                         );
                       },
                     );
@@ -102,8 +176,7 @@ class NoteViewState extends State<NoteView> {
           );
   }
 
-  Widget buildNoteCard(
-      BuildContext context, int noteIndex, dynamic noteKey, NoteModel note) {
+  Widget buildNoteCard(BuildContext context, int noteIndex, NoteModel note) {
     return Card(
       child: ListTile(
         shape: RoundedRectangleBorder(
@@ -116,12 +189,12 @@ class NoteViewState extends State<NoteView> {
             setState(() {
               selectedItems[noteIndex] = value ?? false;
               if (selectedItems[noteIndex] == true) {
-                notesKeys.add(noteKey);
+                notesKeys.add(note.key);
                 Provider.of<BottomNavBarProvider>(context, listen: false)
                     .setNotesKeys(notesKeys);
               } else {
-                if (notesKeys.contains(noteKey)) {
-                  notesKeys.remove(noteKey);
+                if (notesKeys.contains(note.key)) {
+                  notesKeys.remove(note.key);
                   Provider.of<BottomNavBarProvider>(context, listen: false)
                       .setNotesKeys(notesKeys);
                 }
@@ -133,7 +206,7 @@ class NoteViewState extends State<NoteView> {
         trailing: IconButton(
           icon: const Icon(Icons.edit),
           onPressed: () {
-            navigateToNoteEdit(context, noteKey, note);
+            navigateToNoteEdit(context, note);
           },
         ),
         onTap: () {
@@ -154,13 +227,12 @@ class NoteViewState extends State<NoteView> {
     );
   }
 
-  void navigateToNoteEdit(
-      BuildContext context, dynamic noteKey, NoteModel note) {
+  void navigateToNoteEdit(BuildContext context, NoteModel note) {
     Navigator.push(
       context,
       MaterialPageRoute(
         maintainState: false,
-        builder: (context) => EditNoteView(noteKey: noteKey, note: note),
+        builder: (context) => EditNoteView(noteKey: note.key, note: note),
       ),
     ).then((value) {
       setState(() {

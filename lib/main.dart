@@ -135,7 +135,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   label: 'Add Note',
                 ),
                 // BottomNavigationBarItem(
-                //   icon: Icon(Icons.delete),
+                //   icon: Icon(Icons.restore_from_trash_outlined),
                 //   label: 'Trash',
                 // ),
               ],

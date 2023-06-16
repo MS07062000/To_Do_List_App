@@ -12,8 +12,8 @@ class TrashView extends StatefulWidget {
 
 class _TrashViewState extends State<TrashView> {
   bool isLoading = true;
-  late Map<dynamic, NoteModel> notesMap;
-  late ValueNotifier<Map<dynamic, NoteModel>> notesMapNotifier;
+  late List<NoteModel> notesMap;
+  late ValueNotifier<List<NoteModel>> notesMapNotifier;
   List<bool> selectedItems = [];
   List<dynamic> notesKeys = [];
   @override
@@ -25,7 +25,7 @@ class _TrashViewState extends State<TrashView> {
   Future<void> getDeletedData() async {
     notesMap = await getDeletedNotes();
     setState(() {
-      notesMapNotifier = ValueNotifier<Map<dynamic, NoteModel>>(notesMap);
+      notesMapNotifier = ValueNotifier<List<NoteModel>>(notesMap);
       selectedItems = List.filled(notesMap.length, false);
       isLoading = false;
     });
@@ -91,7 +91,7 @@ class _TrashViewState extends State<TrashView> {
                   ),
                 ),
               Expanded(
-                child: ValueListenableBuilder<Map<dynamic, NoteModel>>(
+                child: ValueListenableBuilder<List<NoteModel>>(
                   valueListenable: notesMapNotifier,
                   builder: (context, notesMap, _) {
                     if (notesMap.isEmpty) {
@@ -103,13 +103,11 @@ class _TrashViewState extends State<TrashView> {
                     return ListView.builder(
                       itemCount: notesMap.length,
                       itemBuilder: (context, index) {
-                        int key = notesMap.keys.elementAt(index);
-                        NoteModel currentNote = notesMap[key]!;
+                        NoteModel currentNote = notesMap[index];
                         return Padding(
                             padding: const EdgeInsets.only(
                                 left: 8.0, right: 8.0, top: 4.0, bottom: 4.0),
-                            child: buildNoteCard(
-                                context, index, key, currentNote));
+                            child: buildNoteCard(context, index, currentNote));
                       },
                     );
                   },
@@ -119,8 +117,7 @@ class _TrashViewState extends State<TrashView> {
           );
   }
 
-  Widget buildNoteCard(
-      BuildContext context, int noteIndex, dynamic noteKey, NoteModel note) {
+  Widget buildNoteCard(BuildContext context, int noteIndex, NoteModel note) {
     return Card(
       child: ListTile(
         shape: RoundedRectangleBorder(
@@ -134,37 +131,16 @@ class _TrashViewState extends State<TrashView> {
             setState(() {
               selectedItems[noteIndex] = value ?? false;
               if (selectedItems[noteIndex] == true) {
-                notesKeys.add(noteKey);
+                notesKeys.add(note.key);
               } else {
-                if (notesKeys.contains(noteKey)) {
-                  notesKeys.remove(noteKey);
+                if (notesKeys.contains(note.key)) {
+                  notesKeys.remove(note.key);
                 }
               }
             });
           },
         ),
         title: Text(note.notetitle),
-        // trailing: PopupMenuButton(
-        //   itemBuilder: (context) => [
-        //     const PopupMenuItem(
-        //       value: 'add',
-        //       child: Text('Add Again'),
-        //     ),
-        //     const PopupMenuItem(
-        //       value: 'delete',
-        //       child: Text('Delete'),
-        //     )
-        //   ],
-        //   onSelected: (value) {
-        //     if (value == 'add') {
-        //       // Handle 'Edit' option
-        //       readd(context, noteIndex, note);
-        //     } else if (value == 'delete') {
-        //       // Handle 'Delete' option
-        //       deleteNoteFromDatabase(context, note);
-        //     }
-        //   },
-        // ),
         onTap: () {
           // Handle tap on note card
           navigateToNoteView(context, note);
