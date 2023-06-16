@@ -1,10 +1,12 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:hive_flutter/adapters.dart';
+import 'package:provider/provider.dart';
 import 'package:to_do_list_app/HomeScreen/note_content_page.dart';
 import 'package:to_do_list_app/LocationNotesScreen/get_current_location.dart';
+import 'package:to_do_list_app/main.dart';
 import '../Database/note_model.dart';
+import '../HomeScreen/edit_note_view.dart';
 
 class LocationNoteView extends StatefulWidget {
   const LocationNoteView({super.key});
@@ -14,59 +16,71 @@ class LocationNoteView extends StatefulWidget {
 }
 
 class _LocationNoteViewState extends State<LocationNoteView> {
-  bool isLoading = true;
-  Box<NoteModel>? noteBox; // Declare a reference to the Hive box
-  Future<Position>? currentLocation;
+  // bool isLoading = true;
+  // Box<NoteModel>? noteBox; // Declare a reference to the Hive box
+  // Future<Position>? currentLocation;
+  List<bool> selectedItems = [];
+  List<dynamic> notesKeys = [];
+  final currentLocationValue = ValueNotifier<Position?>(null);
+  ValueNotifier<List<NoteModel>> notesNotifier =
+      ValueNotifier<List<NoteModel>>([]);
 
   @override
   void initState() {
     super.initState();
-    openHiveBox(); // Open the Hive box when the state is initialized
+    Provider.of<BottomNavBarProvider>(context, listen: false)
+        .refreshNotifier
+        .addListener(_refreshNotes);
   }
 
-  Future<void> openHiveBox() async {
-    await initializeHive();
-    registerHiveAdapters();
-    final box = await Hive.openBox<NoteModel>('notes');
-    setState(() {
-      noteBox = box;
-      // isLoading = false;
-    });
-    await getLocation();
+  @override
+  void dispose() {
+    Provider.of<BottomNavBarProvider>(context, listen: false)
+        .refreshNotifier
+        .addListener(_refreshNotes);
+    super.dispose();
   }
 
-  Future<void> getLocation() async {
-    setState(() {
-      currentLocation = getCurrentLocation(context);
-      isLoading = false;
-      // print(isLoading);
+  void _refreshNotes() {
+    if (!Provider.of<BottomNavBarProvider>(context, listen: false)
+        .refreshNotifier
+        .value) {
+      return;
+    }
+    if (mounted) {
+      getCurrentLocation(context).then((location) {
+        currentLocationValue.value = location;
+        getNotes(currentLocationValue.value);
+      });
+    }
+    Provider.of<BottomNavBarProvider>(context, listen: false)
+        .refreshNotifier
+        .value = false;
+  }
+
+  Future<void> getNotes(currentLocation) async {
+    notesNotifier = ValueNotifier<List<NoteModel>>(
+        await findNotesFromDestination(currentLocation, 1000.00));
+    selectedItems = List.filled(notesNotifier.value.length, false);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    getCurrentLocation(context).then((location) {
+      currentLocationValue.value = location;
+      getNotes(currentLocationValue.value);
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    // if (isLoading) {
-    //   return const Center(child: CircularProgressIndicator());
-    // }
-
-    // if (currentLocation.latitude == 0.0 && currentLocation!.longitude == 0.0) {
-    //   return const Center(
-    //       child: Text(
-    //           'Please enable both location services and permissions to use this feature.'));
-    // }
-    return FutureBuilder<Position>(
-      future: currentLocation,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
+    return ValueListenableBuilder<Position?>(
+      valueListenable: currentLocationValue,
+      builder: (context, value, child) {
+        if (value == null) {
           return const Center(child: CircularProgressIndicator());
-        } else if (snapshot.hasError) {
-          return Center(child: Text('Error occurred: ${snapshot.error}'));
-        } else if (snapshot.data == null) {
-          return const Padding(
-              padding: EdgeInsets.all(2.0),
-              child: Text('No Notes Available for this Location'));
-        } else if (snapshot.data!.latitude == 0.0 &&
-            snapshot.data!.longitude == 0.0) {
+        } else if (value.latitude == 0.0 && value.longitude == 0.0) {
           return const Padding(
               padding: EdgeInsets.all(2.0),
               child: Text(
@@ -76,12 +90,11 @@ class _LocationNoteViewState extends State<LocationNoteView> {
             children: [
               Expanded(
                 child: ValueListenableBuilder<List<NoteModel>>(
-                  valueListenable: findNotesFromDestination(
-                      noteBox!, snapshot.data!, 1000.00),
+                  valueListenable: notesNotifier,
                   builder: (context, list, _) {
                     if (list.isEmpty) {
                       return const Center(
-                        child: Text("No Notes"),
+                        child: Text("No Notes Available for this Location"),
                       );
                     }
 
@@ -92,7 +105,7 @@ class _LocationNoteViewState extends State<LocationNoteView> {
                         return Padding(
                             padding: const EdgeInsets.only(
                                 left: 8.0, right: 8.0, top: 4.0, bottom: 4.0),
-                            child: buildNoteCard(context, currentNote));
+                            child: buildNoteCard(context, index, currentNote));
                       },
                     );
                   },
@@ -104,114 +117,102 @@ class _LocationNoteViewState extends State<LocationNoteView> {
       },
     );
   }
-}
 
-Widget buildNoteCard(BuildContext context, NoteModel note) {
-  return Card(
-    child: ListTile(
-      shape: RoundedRectangleBorder(
-        side: BorderSide(color: _getRandomColor(), width: 1),
-        borderRadius: BorderRadius.circular(5),
-      ),
-      leading: Text(note.notetitle),
-      trailing: PopupMenuButton(
-        itemBuilder: (context) => [
-          const PopupMenuItem(
-            value: 'edit',
-            child: Text('Edit'),
-          ),
-          const PopupMenuItem(
-            value: 'delete',
-            child: Text('Delete'),
-          )
-        ],
-        onSelected: (value) {
-          if (value == 'edit') {
-            // Handle 'Edit' option
-          } else if (value == 'delete') {
-            // Handle 'Delete' option
-            deleteNote(context, note);
-          }
+  Widget buildNoteCard(BuildContext context, int noteIndex, NoteModel note) {
+    return Card(
+      child: ListTile(
+        shape: RoundedRectangleBorder(
+          side: BorderSide(color: _getRandomColor(), width: 1),
+          borderRadius: BorderRadius.circular(5),
+        ),
+        leading: Checkbox(
+          value: selectedItems[noteIndex],
+          onChanged: (value) {
+            setState(() {
+              selectedItems[noteIndex] = value ?? false;
+              if (selectedItems[noteIndex] == true) {
+                notesKeys.add(note.key);
+                Provider.of<BottomNavBarProvider>(context, listen: false)
+                    .setNotesKeys(notesKeys);
+              } else {
+                if (notesKeys.contains(note.key)) {
+                  notesKeys.remove(note.key);
+                  Provider.of<BottomNavBarProvider>(context, listen: false)
+                      .setNotesKeys(notesKeys);
+                }
+              }
+            });
+          },
+        ),
+        title: Text(note.notetitle),
+        trailing: IconButton(
+          icon: const Icon(Icons.edit),
+          onPressed: () {
+            navigateToNoteEdit(context, note);
+          },
+        ),
+        onTap: () {
+          // Handle tap on note card
+          navigateToNoteView(context, note);
         },
       ),
-      onTap: () {
-        // Handle tap on note card
-        navigateToNoteView(context, note);
-      },
-    ),
-  );
-}
-
-ValueNotifier<List<NoteModel>> findNotesFromDestination(
-    Box<NoteModel> noteBox, Position currentLocation, double maxDistance) {
-  // Get the latitude and longitude of the current location
-  double currentLatitude = currentLocation.latitude;
-  double currentLongitude = currentLocation.longitude;
-
-  // Filter the notes based on the distance from the current location
-  List<NoteModel> filteredNotes = noteBox.values.where((note) {
-    double noteLatitude = double.parse(note.destination.split(',')[0]);
-    double noteLongitude =
-        double.parse(note.destination.split(',')[1]); //note.destination;
-
-    // Calculate the distance between the current location and note's destination
-    double distanceInMeters = Geolocator.distanceBetween(
-      currentLatitude,
-      currentLongitude,
-      noteLatitude,
-      noteLongitude,
     );
+  }
 
-    // Filter the notes within the maximum distance
-    return distanceInMeters <= maxDistance && !note.isDelete;
-  }).toList();
+  void navigateToNoteEdit(BuildContext context, NoteModel note) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        maintainState: false,
+        builder: (context) => EditNoteView(noteKey: note.key, note: note),
+      ),
+    ).then((value) {});
+  }
 
-  // Perform further operations with the filtered notes
-  // For example, display the filtered notes in a list or on the map
-  return ValueNotifier<List<NoteModel>>(filteredNotes);
+  void navigateToNoteView(BuildContext context, NoteModel note) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => NoteContentPage(note: note),
+      ),
+    );
+  }
+
+  Color _getRandomColor() {
+    final random = Random();
+    final r = random.nextInt(256);
+    final g = random.nextInt(256);
+    final b = random.nextInt(256);
+
+    return Color.fromARGB(255, r, g, b);
+  }
 }
 
-void navigateToNoteView(BuildContext context, NoteModel note) {
-  Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (context) => NoteContentPage(note: note),
-    ),
-  );
-}
+// void deleteNote(BuildContext context, NoteModel note) {
+//   showDialog(
+//     context: context,
+//     builder: (BuildContext context) {
+//       return AlertDialog(
+//         content: Text(
+//           "Do you want to delete ${note.notetitle}?",
+//         ),
+//         actions: <Widget>[
+//           TextButton(
+//             child: const Text("No"),
+//             onPressed: () => Navigator.of(context).pop(),
+//           ),
+//           TextButton(
+//             child: const Text("Yes"),
+//             onPressed: () async {
+//               final navigator = Navigator.of(context);
+//               await Hive.box<NoteModel>('notes').delete(note.key);
+//               navigator.pop();
+//             },
+//           ),
+//         ],
+//       );
+//     },
+//   );
+// }
 
-void deleteNote(BuildContext context, NoteModel note) {
-  showDialog(
-    context: context,
-    builder: (BuildContext context) {
-      return AlertDialog(
-        content: Text(
-          "Do you want to delete ${note.notetitle}?",
-        ),
-        actions: <Widget>[
-          TextButton(
-            child: const Text("No"),
-            onPressed: () => Navigator.of(context).pop(),
-          ),
-          TextButton(
-            child: const Text("Yes"),
-            onPressed: () async {
-              final navigator = Navigator.of(context);
-              await Hive.box<NoteModel>('notes').delete(note.key);
-              navigator.pop();
-            },
-          ),
-        ],
-      );
-    },
-  );
-}
 
-Color _getRandomColor() {
-  final random = Random();
-  final r = random.nextInt(256);
-  final g = random.nextInt(256);
-  final b = random.nextInt(256);
-
-  return Color.fromARGB(255, r, g, b);
-}

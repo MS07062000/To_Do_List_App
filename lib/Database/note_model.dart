@@ -1,3 +1,4 @@
+import 'package:geolocator/geolocator.dart';
 import 'package:hive_flutter/adapters.dart';
 import 'package:path_provider/path_provider.dart' as path_provider;
 part 'note_model.g.dart';
@@ -190,4 +191,36 @@ Future<void> setDeleteOfAllSelectedNote(List<dynamic> noteKeys) async {
     note!.isDelete = true;
     await noteBox.put(noteKey, note);
   }
+}
+
+Future<List<NoteModel>> findNotesFromDestination(
+    Position currentLocation, double maxDistance) async {
+  await initializeHive();
+  await registerHiveAdapters();
+  final noteBox = await Hive.openBox<NoteModel>('notes');
+  // Get the latitude and longitude of the current location
+  double currentLatitude = currentLocation.latitude;
+  double currentLongitude = currentLocation.longitude;
+
+  // Filter the notes based on the distance from the current location
+  List<NoteModel> filteredNotes = noteBox.values.where((note) {
+    double noteLatitude = double.parse(note.destination.split(',')[0]);
+    double noteLongitude =
+        double.parse(note.destination.split(',')[1]); //note.destination;
+
+    // Calculate the distance between the current location and note's destination
+    double distanceInMeters = Geolocator.distanceBetween(
+      currentLatitude,
+      currentLongitude,
+      noteLatitude,
+      noteLongitude,
+    );
+
+    // Filter the notes within the maximum distance
+    return distanceInMeters <= maxDistance && !note.isDelete;
+  }).toList();
+
+  // Perform further operations with the filtered notes
+  // For example, display the filtered notes in a list or on the map
+  return (filteredNotes);
 }

@@ -170,53 +170,6 @@ class NoteViewState extends State<NoteView> {
     });
   }
 
-  void deleteNote(BuildContext context, int noteKey, NoteModel note) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          content: Text(
-            "Do you want to delete ${note.notetitle}?",
-          ),
-          actions: <Widget>[
-            TextButton(
-              child: const Text("No"),
-              onPressed: () => Navigator.of(context).pop(),
-            ),
-            TextButton(
-              child: const Text("Yes"),
-              onPressed: () {
-                if (note.textnote != null) {
-                  updateNote(
-                      noteKey: noteKey,
-                      destination: note.destination,
-                      notetitle: note.notetitle,
-                      textnote: note.textnote,
-                      isRead: true,
-                      isDelete: true);
-                } else {
-                  updateNote(
-                      noteKey: noteKey,
-                      destination: note.destination,
-                      notetitle: note.notetitle,
-                      checklist: note.checklist,
-                      isRead: true,
-                      isDelete: true);
-                }
-                Navigator.of(context).pop();
-                setState(() {
-                  isLoading = true;
-                });
-                getNotes();
-                // await Hive.box<NoteModel>('notes').delete(note.key);
-              },
-            ),
-          ],
-        );
-      },
-    );
-  }
-
   Color _getRandomColor() {
     final random = Random();
     final r = random.nextInt(256);
@@ -226,3 +179,52 @@ class NoteViewState extends State<NoteView> {
     return Color.fromARGB(255, r, g, b);
   }
 }
+
+
+
+// void deleteNote(BuildContext context, int noteKey, NoteModel note) {
+  //   showDialog(
+  //     context: context,
+  //     builder: (BuildContext context) {
+  //       return AlertDialog(
+  //         content: Text(
+  //           "Do you want to delete ${note.notetitle}?",
+  //         ),
+  //         actions: <Widget>[
+  //           TextButton(
+  //             child: const Text("No"),
+  //             onPressed: () => Navigator.of(context).pop(),
+  //           ),
+  //           TextButton(
+  //             child: const Text("Yes"),
+  //             onPressed: () {
+  //               if (note.textnote != null) {
+  //                 updateNote(
+  //                     noteKey: noteKey,
+  //                     destination: note.destination,
+  //                     notetitle: note.notetitle,
+  //                     textnote: note.textnote,
+  //                     isRead: true,
+  //                     isDelete: true);
+  //               } else {
+  //                 updateNote(
+  //                     noteKey: noteKey,
+  //                     destination: note.destination,
+  //                     notetitle: note.notetitle,
+  //                     checklist: note.checklist,
+  //                     isRead: true,
+  //                     isDelete: true);
+  //               }
+  //               Navigator.of(context).pop();
+  //               setState(() {
+  //                 isLoading = true;
+  //               });
+  //               getNotes();
+  //               // await Hive.box<NoteModel>('notes').delete(note.key);
+  //             },
+  //           ),
+  //         ],
+  //       );
+  //     },
+  //   );
+  // }

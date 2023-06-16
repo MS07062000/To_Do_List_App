@@ -85,6 +85,15 @@ class _MyHomePageState extends State<MyHomePage> {
                       }
                     },
                   );
+                } else if (bottomNavBarProvider.currentIndex == 1) {
+                  return IconButton(
+                    icon: const Icon(Icons.delete),
+                    onPressed: () {
+                      if (bottomNavBarProvider.noteKeys.isNotEmpty) {
+                        deleteSelectedNotes(context, bottomNavBarProvider);
+                      }
+                    },
+                  );
                 } else if (bottomNavBarProvider.currentIndex == 3) {
                   return IconButton(
                     icon: const Icon(Icons.delete),
