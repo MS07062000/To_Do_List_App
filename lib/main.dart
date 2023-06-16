@@ -4,7 +4,7 @@ import 'package:to_do_list_app/AddNoteScreen/add_new_note_view.dart';
 import 'package:to_do_list_app/Database/note_model.dart';
 import 'package:to_do_list_app/HomeScreen/home_view.dart';
 import 'package:to_do_list_app/LocationNotesScreen/location_view.dart';
-// import 'package:to_do_list_app/TrashScreen/trash_view.dart';
+import 'package:to_do_list_app/TrashScreen/trash_view.dart';
 
 void main() {
   runApp(const MyApp());
@@ -27,11 +27,9 @@ class MyApp extends StatelessWidget {
 
 class BottomNavBarProvider with ChangeNotifier {
   int _currentIndex = 0;
-  bool _isNotesDeleted = false;
   List<dynamic> _notesKeys = [];
   int get currentIndex => _currentIndex;
   List<dynamic> get noteKeys => _notesKeys;
-  bool get isNotesDeleted => _isNotesDeleted;
   ValueNotifier<bool> refreshNotifier = ValueNotifier<bool>(false);
 
   void setCurrentIndex(int index) {
@@ -41,11 +39,6 @@ class BottomNavBarProvider with ChangeNotifier {
 
   void setNotesKeys(List<dynamic> noteKeys) {
     _notesKeys = noteKeys;
-    notifyListeners();
-  }
-
-  void setNotesDeleted(bool isNotesDeleted) {
-    _isNotesDeleted = isNotesDeleted;
     notifyListeners();
   }
 }
@@ -62,7 +55,7 @@ class _MyHomePageState extends State<MyHomePage> {
     const HomeView(),
     const LocationView(),
     const AddNewNoteView(),
-    // const TrashView()
+    const TrashView()
   ];
 
   @override
@@ -98,7 +91,8 @@ class _MyHomePageState extends State<MyHomePage> {
                   return IconButton(
                     icon: const Icon(Icons.delete),
                     onPressed: () {
-                      deletePermanentlyTheDeletedNotes(context);
+                      deletePermanentlyTheDeletedNotes(
+                          context, bottomNavBarProvider);
                     },
                   );
                 } else {
@@ -134,10 +128,10 @@ class _MyHomePageState extends State<MyHomePage> {
                   icon: Icon(Icons.add),
                   label: 'Add Note',
                 ),
-                // BottomNavigationBarItem(
-                //   icon: Icon(Icons.restore_from_trash_outlined),
-                //   label: 'Trash',
-                // ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.restore_from_trash_outlined),
+                  label: 'Trash',
+                ),
               ],
             );
           },
@@ -169,7 +163,6 @@ class _MyHomePageState extends State<MyHomePage> {
                   bottomNavBarProvider.refreshNotifier.value = true;
                   Navigator.of(context).pop();
                 });
-                // bottomNavBarProvider.setNotesDeleted(true);
               },
             ),
           ],
@@ -178,7 +171,8 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-  void deletePermanentlyTheDeletedNotes(BuildContext context) {
+  void deletePermanentlyTheDeletedNotes(
+      BuildContext context, BottomNavBarProvider bottomNavBarProvider) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -195,8 +189,10 @@ class _MyHomePageState extends State<MyHomePage> {
               child: const Text("Yes"),
               onPressed: () {
                 // final navigator = Navigator.of(context);
-                deleteAllPermanently()
-                    .then((value) => Navigator.of(context).pop());
+                deleteAllPermanently().then((value) {
+                  bottomNavBarProvider.refreshNotifier.value = true;
+                  Navigator.of(context).pop();
+                });
                 // navigator.pop();
               },
             ),

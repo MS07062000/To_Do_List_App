@@ -92,6 +92,7 @@ Future<void> updateNote({
       checklist: checklist,
       isRead: isRead ?? false,
       isDelete: isDelete ?? false);
+  print("update");
   print(noteBox.keys.length);
   print(noteKey);
   print(noteBox.containsKey(noteKey));
@@ -161,7 +162,10 @@ Future<void> reAddAllSelectedNote(List<dynamic> noteKeys) async {
   final noteBox = await Hive.openBox<NoteModel>('notes');
   for (int i = 0; i < noteKeys.length; i++) {
     NoteModel? note = noteBox.get(noteKeys[i]);
-    if (note!.textnote != null) {
+    print("readding");
+    print(i);
+    print(note!.textnote);
+    if (note.textnote != null) {
       await updateNote(
           noteKey: noteKeys[i],
           destination: note.destination,

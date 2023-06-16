@@ -1,8 +1,10 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:to_do_list_app/Database/note_model.dart';
 import 'package:to_do_list_app/HomeScreen/note_content_page.dart';
+import 'package:to_do_list_app/main.dart';
 
 class TrashView extends StatefulWidget {
   const TrashView({super.key});
@@ -12,35 +14,70 @@ class TrashView extends StatefulWidget {
 
 class _TrashViewState extends State<TrashView> {
   bool isLoading = true;
-  late List<NoteModel> notesMap;
-  late ValueNotifier<List<NoteModel>> notesMapNotifier;
+  // late List<NoteModel> notes;
+  late ValueNotifier<List<NoteModel>> notesNotifier;
   List<bool> selectedItems = [];
   List<dynamic> notesKeys = [];
+  TextEditingController searchController = TextEditingController();
+  List<NoteModel> filteredNotes = [];
   @override
   void initState() {
     super.initState();
     getDeletedData();
+    Provider.of<BottomNavBarProvider>(context, listen: false)
+        .refreshNotifier
+        .addListener(_refreshNotes);
+  }
+
+  @override
+  void dispose() {
+    Provider.of<BottomNavBarProvider>(context, listen: false)
+        .refreshNotifier
+        .addListener(_refreshNotes);
+    super.dispose();
+  }
+
+  void _refreshNotes() {
+    if (!Provider.of<BottomNavBarProvider>(context, listen: false)
+        .refreshNotifier
+        .value) {
+      return;
+    }
+    if (mounted) {
+      setState(() {
+        isLoading = true;
+      });
+      getDeletedData();
+    }
+
+    Provider.of<BottomNavBarProvider>(context, listen: false)
+        .refreshNotifier
+        .value = false;
   }
 
   Future<void> getDeletedData() async {
-    notesMap = await getDeletedNotes();
+    notesNotifier = ValueNotifier<List<NoteModel>>(await getDeletedNotes());
+    selectedItems = List.filled(notesNotifier.value.length, false);
     setState(() {
-      notesMapNotifier = ValueNotifier<List<NoteModel>>(notesMap);
-      selectedItems = List.filled(notesMap.length, false);
       isLoading = false;
+      print(isLoading);
     });
   }
 
   Future<void> deleteSelectedItems() async {
     await deleteAllSelectedNote(notesKeys);
-    isLoading = true;
-    await getDeletedData();
+
+    Provider.of<BottomNavBarProvider>(context, listen: false)
+        .refreshNotifier
+        .value = true;
   }
 
-  Future<void> reAddSelectedItems() async {
-    await reAddAllSelectedNote(notesKeys);
-    isLoading = true;
-    await getDeletedData();
+  void reAddSelectedItems() {
+    reAddAllSelectedNote(notesKeys).then((value) {
+      Provider.of<BottomNavBarProvider>(context, listen: false)
+          .refreshNotifier
+          .value = true;
+    });
   }
 
   @override
@@ -49,64 +86,110 @@ class _TrashViewState extends State<TrashView> {
         ? const Center(child: CircularProgressIndicator())
         : Column(
             children: [
-              // add one search bar here
-              if (selectedItems.contains(true))
+              if (notesNotifier.value.isNotEmpty) ...[
+                Row(
+                  children: [
+                    Expanded(
+                      child: Padding(
+                        padding:
+                            const EdgeInsets.fromLTRB(10.0, 5.0, 10.0, 5.0),
+                        child: TextField(
+                          controller: searchController,
+                          onChanged: (value) {
+                            setState(() {
+                              filteredNotes = notesNotifier.value
+                                  .where((note) => note.notetitle
+                                      .toLowerCase()
+                                      .contains(value.toLowerCase()))
+                                  .toList();
+                            });
+                          },
+                          decoration: const InputDecoration(
+                            labelText: 'Search Notes',
+                            border: OutlineInputBorder(),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+              if (selectedItems.contains(true)) ...[
                 Padding(
-                  padding: const EdgeInsets.all(4.0),
+                  padding: const EdgeInsets.all(8.0),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Text("Select any one?"),
-                      Padding(
-                        padding: const EdgeInsets.all(4.0),
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.green[900],
-                            foregroundColor: Colors.white,
-                          ),
+                      IconButton(
+                          color: Colors.green[900],
                           onPressed: () {
-                            // Perform readd operation on selected items
                             showDialogForReaddOrDelete(context, true);
                           },
-                          child: const Text('Readd'),
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.all(4.0),
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor:
-                                Colors.red, // background (button) color
-                            foregroundColor:
-                                Colors.white, // foreground (text) color
-                          ),
+                          icon: const Icon(Icons.replay)),
+                      const Spacer(),
+                      const Text("Select any one?"),
+                      const Spacer(),
+                      IconButton(
+                          color: Colors.red[900],
                           onPressed: () {
-                            // Perform delete operation on selected items
                             showDialogForReaddOrDelete(context, false);
                           },
-                          child: const Text('Delete'),
+                          icon: const Icon(Icons.delete_forever)),
+                    ],
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(8.0, 4.0, 8.0, 4.0),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: CheckboxListTile(
+                          controlAffinity: ListTileControlAffinity.leading,
+                          title: const Text('Select All'),
+                          value:
+                              selectedItems.every((isSelected) => isSelected),
+                          onChanged: (value) {
+                            setState(
+                              () {
+                                selectedItems = List.filled(
+                                    notesNotifier.value.length, value ?? false);
+                              },
+                            );
+                          },
                         ),
                       ),
                     ],
                   ),
                 ),
+              ],
               Expanded(
                 child: ValueListenableBuilder<List<NoteModel>>(
-                  valueListenable: notesMapNotifier,
-                  builder: (context, notesMap, _) {
-                    if (notesMap.isEmpty) {
+                  valueListenable: notesNotifier,
+                  builder: (context, notes, _) {
+                    List<NoteModel> displayedNotes =
+                        searchController.text.isEmpty ? notes : filteredNotes;
+
+                    if (notes.isEmpty) {
                       return const Center(
                         child: Text("No Notes"),
                       );
                     }
 
+                    if (displayedNotes.isEmpty) {
+                      return const Center(
+                        child: Text(
+                          'No notes found as per the input entered by you.',
+                        ),
+                      );
+                    }
+
                     return ListView.builder(
-                      itemCount: notesMap.length,
+                      itemCount: displayedNotes.length,
                       itemBuilder: (context, index) {
-                        NoteModel currentNote = notesMap[index];
+                        NoteModel currentNote = displayedNotes[index];
                         return Padding(
                             padding: const EdgeInsets.only(
-                                left: 8.0, right: 8.0, top: 4.0, bottom: 4.0),
+                                left: 8.0, right: 8.0, top: 0, bottom: 0),
                             child: buildNoteCard(context, index, currentNote));
                       },
                     );
@@ -124,7 +207,6 @@ class _TrashViewState extends State<TrashView> {
           side: BorderSide(color: _getRandomColor(), width: 1),
           borderRadius: BorderRadius.circular(5),
         ),
-        // leading: Text(note.notetitle),
         leading: Checkbox(
           value: selectedItems[noteIndex],
           onChanged: (value) {
@@ -142,7 +224,6 @@ class _TrashViewState extends State<TrashView> {
         ),
         title: Text(note.notetitle),
         onTap: () {
-          // Handle tap on note card
           navigateToNoteView(context, note);
         },
       ),
@@ -179,12 +260,9 @@ class _TrashViewState extends State<TrashView> {
             ),
             TextButton(
               child: const Text("Yes"),
-              onPressed: () async {
-                final navigator = Navigator.of(context);
-                isReadd
-                    ? await reAddSelectedItems()
-                    : await deleteSelectedItems();
-                navigator.pop();
+              onPressed: () {
+                isReadd ? reAddSelectedItems() : deleteSelectedItems();
+                Navigator.of(context).pop();
               },
             ),
           ],
@@ -192,8 +270,60 @@ class _TrashViewState extends State<TrashView> {
       },
     );
   }
+}
 
-  // void readd(BuildContext context, int noteIndex, NoteModel note) {
+Color _getRandomColor() {
+  final random = Random();
+  final r = random.nextInt(256);
+  final g = random.nextInt(256);
+  final b = random.nextInt(256);
+
+  return Color.fromARGB(255, r, g, b);
+}
+
+// Padding(
+//                         padding: const EdgeInsets.all(4.0),
+//                         child: ElevatedButton(
+//                           style: ElevatedButton.styleFrom(
+//                             backgroundColor: Colors.green[900],
+//                             foregroundColor: Colors.white,
+//                           ),
+//                           onPressed: () {
+//                             // Perform readd operation on selected items
+//                             showDialogForReaddOrDelete(context, true);
+//                           },
+//                           child: const Text('Readd'),
+//                         ),
+//                       ),
+//                       Padding(
+//                         padding: const EdgeInsets.all(4.0),
+//                         child: ElevatedButton(
+//                           style: ElevatedButton.styleFrom(
+//                             backgroundColor:
+//                                 Colors.red, // background (button) color
+//                             foregroundColor:
+//                                 Colors.white, // foreground (text) color
+//                           ),
+//                           onPressed: () {
+//                             // Perform delete operation on selected items
+//                             showDialogForReaddOrDelete(context, false);
+//                           },
+//                           child: const Text('Delete'),
+//                         ),
+//                       ),
+
+
+
+
+
+
+
+
+
+
+
+
+// void readd(BuildContext context, int noteIndex, NoteModel note) {
   //   showDialog(
   //     context: context,
   //     builder: (BuildContext context) {
@@ -251,13 +381,3 @@ class _TrashViewState extends State<TrashView> {
   //     },
   //   );
   // }
-}
-
-Color _getRandomColor() {
-  final random = Random();
-  final r = random.nextInt(256);
-  final g = random.nextInt(256);
-  final b = random.nextInt(256);
-
-  return Color.fromARGB(255, r, g, b);
-}

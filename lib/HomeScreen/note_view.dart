@@ -20,7 +20,6 @@ class NoteViewState extends State<NoteView> {
   List<bool> selectedItems = [];
   List<dynamic> notesKeys = [];
   TextEditingController searchController = TextEditingController();
-
   List<NoteModel> filteredNotes = [];
   @override
   void initState() {
@@ -164,7 +163,7 @@ class NoteViewState extends State<NoteView> {
                         NoteModel currentNote = displayedNotes[index];
                         return Padding(
                           padding: const EdgeInsets.only(
-                              left: 8.0, right: 8.0, top: 4.0, bottom: 4.0),
+                              left: 8.0, right: 8.0, top: 0, bottom: 0),
                           child: buildNoteCard(context, index, currentNote),
                         );
                       },
