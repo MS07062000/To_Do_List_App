@@ -65,7 +65,7 @@ class _TrashViewState extends State<TrashView> {
   }
 
   Future<void> deleteSelectedItems() async {
-    await deleteAllSelectedNote(notesKeys);
+    await deleteAllPermanently(notesKeys);
 
     Provider.of<BottomNavBarProvider>(context, listen: false)
         .refreshNotifier
@@ -73,7 +73,9 @@ class _TrashViewState extends State<TrashView> {
   }
 
   void reAddSelectedItems() {
-    reAddAllSelectedNote(notesKeys).then((value) {
+    reAddAllSelectedNote(
+            Provider.of<BottomNavBarProvider>(context, listen: false).noteKeys)
+        .then((value) {
       Provider.of<BottomNavBarProvider>(context, listen: false)
           .refreshNotifier
           .value = true;
@@ -214,9 +216,13 @@ class _TrashViewState extends State<TrashView> {
               selectedItems[noteIndex] = value ?? false;
               if (selectedItems[noteIndex] == true) {
                 notesKeys.add(note.key);
+                Provider.of<BottomNavBarProvider>(context, listen: false)
+                    .setNotesKeys(notesKeys);
               } else {
                 if (notesKeys.contains(note.key)) {
                   notesKeys.remove(note.key);
+                  Provider.of<BottomNavBarProvider>(context, listen: false)
+                      .setNotesKeys(notesKeys);
                 }
               }
             });
@@ -246,7 +252,7 @@ class _TrashViewState extends State<TrashView> {
         return AlertDialog(
           content: isReadd
               ? const Text(
-                  "Are you sure you want to readd all Selected Notes?",
+                  "Are you sure you want to readd all Selected Notes ?",
                 )
               : const Text(
                   "Are you sure you want to delete all Selected Notes?",

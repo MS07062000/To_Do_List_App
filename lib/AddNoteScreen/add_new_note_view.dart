@@ -351,7 +351,7 @@ class _AddNewNoteViewState extends State<AddNewNoteView> {
         notetitle: noteTitle.text.toString(),
         checklist: checkListNote,
         isDelete: false,
-        isRead: false,
+        isNotified: false,
       );
     }
 
@@ -362,7 +362,7 @@ class _AddNewNoteViewState extends State<AddNewNoteView> {
         notetitle: noteTitle.text.toString(),
         textnote: textNote.text.toString(),
         isDelete: false,
-        isRead: false,
+        isNotified: false,
       );
     }
   }

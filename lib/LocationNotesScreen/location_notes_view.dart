@@ -18,7 +18,7 @@ class LocationNoteView extends StatefulWidget {
 
 class _LocationNoteViewState extends State<LocationNoteView> {
   // bool isLoading = true;
-  bool selectAll = false;
+  bool isNotesAvailable = true;
   List<bool> selectedItems = [];
   List<dynamic> notesKeys = [];
   final currentLocationValue = ValueNotifier<Position?>(null);
@@ -34,6 +34,13 @@ class _LocationNoteViewState extends State<LocationNoteView> {
     Provider.of<BottomNavBarProvider>(context, listen: false)
         .refreshNotifier
         .addListener(_refreshNotes);
+    notesNotifier.addListener(() {
+      if (notesNotifier.value.isEmpty) {
+        isNotesAvailable = false;
+      } else {
+        isNotesAvailable = true;
+      }
+    });
     startLocationMonitoring();
   }
 
@@ -65,16 +72,13 @@ class _LocationNoteViewState extends State<LocationNoteView> {
 
   Future<void> getNotes(currentLocation) async {
     notesNotifier = ValueNotifier<List<NoteModel>>(
-        await findNotesFromDestination(currentLocation, 250.00));
+        await findNotesFromDestination(currentLocation, 500.00, false));
     selectedItems = List.filled(notesNotifier.value.length, false);
   }
 
   void startLocationMonitoring() {
     const locationSettings = LocationSettings(
-      accuracy: LocationAccuracy.best,
-      distanceFilter: 250,
-      timeLimit: Duration(seconds: 1),
-    );
+        accuracy: LocationAccuracy.best, timeLimit: Duration(seconds: 30));
     _positionStreamSubscription =
         Geolocator.getPositionStream(locationSettings: locationSettings)
             .listen((Position position) {
@@ -100,10 +104,21 @@ class _LocationNoteViewState extends State<LocationNoteView> {
         if (value == null) {
           return const Center(child: CircularProgressIndicator());
         } else if (value.latitude == 0.0 && value.longitude == 0.0) {
-          return const Padding(
-              padding: EdgeInsets.all(2.0),
-              child: Text(
-                  'Please enable both location services and permissions to use this feature.'));
+          return AlertDialog(
+            title: const Text('Location Services Or Permissions Disabled'),
+            content: const Text(
+                'Please enable both location services and permissions to use this feature.'),
+            actions: [
+              TextButton(
+                child: const Text('Open Settings'),
+                onPressed: () {
+                  // Open device settings
+                  Geolocator.openAppSettings();
+                  Navigator.of(context).pop();
+                },
+              ),
+            ],
+          );
         } else {
           return Column(
             children: [
@@ -165,14 +180,16 @@ class _LocationNoteViewState extends State<LocationNoteView> {
                     List<NoteModel> displayedNotes =
                         searchController.text.isEmpty ? list : filteredNotes;
 
-                    if (searchController.text.isEmpty &&
+                    if (isNotesAvailable &&
+                        searchController.text.isEmpty &&
                         displayedNotes.isEmpty) {
                       return const Center(
                         child: Text("No Notes Available for this Location"),
                       );
                     }
 
-                    if (searchController.text.isNotEmpty &&
+                    if (isNotesAvailable &&
+                        searchController.text.isNotEmpty &&
                         displayedNotes.isEmpty) {
                       return const Center(
                         child: Text(

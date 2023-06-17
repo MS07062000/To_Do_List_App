@@ -198,7 +198,8 @@ class _MyHomePageState extends State<MyHomePage> {
               child: const Text("Yes"),
               onPressed: () {
                 // final navigator = Navigator.of(context);
-                deleteAllPermanently().then((value) {
+                deleteAllPermanently(bottomNavBarProvider.noteKeys)
+                    .then((value) {
                   bottomNavBarProvider.refreshNotifier.value = true;
                   Navigator.of(context).pop();
                 });

@@ -4,6 +4,17 @@ import 'package:to_do_list_app/Database/note_model.dart';
 import 'package:to_do_list_app/Notifications/notification_action.dart';
 import 'package:vibration/vibration.dart';
 
+@pragma('vm:entry-point')
+void onDidReceiveBackgroundNotificationResponse(
+    NotificationResponse details) async {
+  if (details.payload == 'location_zone' ||
+      details.actionId!.compareTo('completed') == 0) {
+    setNotified(details.id);
+    setDeleteOfAllSelectedNote([details.id]);
+    await FlutterLocalNotificationsPlugin().cancel(details.id ?? -1);
+  }
+}
+
 class LocationNotificationHelper {
   FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
       FlutterLocalNotificationsPlugin();
@@ -18,12 +29,12 @@ class LocationNotificationHelper {
   }
 
   void initializeNotifications() async {
-    flutterLocalNotificationsPlugin
-        .resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>()!
-        .requestPermission();
+    // flutterLocalNotificationsPlugin
+    //     .resolvePlatformSpecificImplementation<
+    //         AndroidFlutterLocalNotificationsPlugin>()!
+    //     .requestPermission();
     const AndroidInitializationSettings initializationSettingsAndroid =
-        AndroidInitializationSettings('@mipmap/ic_launcher');
+        AndroidInitializationSettings('launch_background');
     InitializationSettings initializationSettings =
         const InitializationSettings(android: initializationSettingsAndroid);
     await flutterLocalNotificationsPlugin.initialize(initializationSettings,
@@ -32,26 +43,12 @@ class LocationNotificationHelper {
         onDidReceiveNotificationResponse: onDidReceiveNotificationResponse);
   }
 
-  @pragma('vm:entry-point')
-  void onDidReceiveBackgroundNotificationResponse(
-      NotificationResponse details) async {
-    if (details.payload == 'location_zone') {
-      // Open your app and move to the second tab
-      if (details.actionId!.compareTo('completed') == 0) {
-        setNotified(details.id);
-        await flutterLocalNotificationsPlugin.cancel(details.id ?? -1);
-      }
-    }
-  }
-
   void onDidReceiveNotificationResponse(NotificationResponse details) async {
-    if (details.payload == 'location_zone') {
-      if (details.actionId!.compareTo('completed') == 0) {
-        setNotified(details.id);
-        await flutterLocalNotificationsPlugin.cancel(details.id ?? -1);
-      }
-      // Provider.of<BottomNavBarProvider>(context, listen: false)
-      //     .setCurrentIndex(1);
+    if (details.payload == 'location_zone' ||
+        details.actionId!.compareTo('completed') == 0) {
+      // print(details.actionId);
+      setDeleteOfAllSelectedNote([details.id]);
+      await flutterLocalNotificationsPlugin.cancel(details.id ?? -1);
     }
   }
 
@@ -66,9 +63,10 @@ class LocationNotificationHelper {
 
   void checkLocationZoneAndNotifyNotes(Position currentPosition) async {
     List<NoteModel> notes =
-        await findNotesFromDestination(currentPosition, 1000);
+        await findNotesFromDestination(currentPosition, 500, true);
     for (var note in notes) {
       showNotification(note);
+      setNotified(note.key);
       vibrateDevice();
     }
   }
@@ -80,10 +78,7 @@ class LocationNotificationHelper {
 
     List<AndroidNotificationAction> androidActions =
         notificationActions.map((action) {
-      return AndroidNotificationAction(
-        action.id,
-        action.title,
-      );
+      return AndroidNotificationAction(action.id, action.title);
     }).toList();
 
     AndroidNotificationDetails androidPlatformChannelSpecifics =
@@ -93,6 +88,7 @@ class LocationNotificationHelper {
             importance: Importance.high,
             priority: Priority.high,
             playSound: true,
+            groupKey: null,
             actions: androidActions);
 
     NotificationDetails platformChannelSpecifics =

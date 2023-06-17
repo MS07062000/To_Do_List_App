@@ -18,12 +18,9 @@ class NoteModel extends HiveObject {
   List<String>? checklist;
 
   @HiveField(4)
-  bool isRead;
-
-  @HiveField(5)
   bool isDelete;
 
-  @HiveField(6)
+  @HiveField(5)
   bool isNotified;
 
   NoteModel({
@@ -31,7 +28,6 @@ class NoteModel extends HiveObject {
     required this.notetitle,
     this.textnote,
     this.checklist,
-    required this.isRead,
     required this.isDelete,
     required this.isNotified,
   });
@@ -68,7 +64,6 @@ Future<void> insertNote({
       notetitle: notetitle,
       textnote: textnote,
       checklist: checklist,
-      isRead: false,
       isDelete: false,
       isNotified: false);
 
@@ -81,7 +76,6 @@ Future<void> updateNote({
   required String notetitle,
   String? textnote,
   List<String>? checklist,
-  bool? isRead,
   bool? isDelete,
   bool? isNotified,
 }) async {
@@ -95,13 +89,12 @@ Future<void> updateNote({
       notetitle: notetitle,
       textnote: textnote,
       checklist: checklist,
-      isRead: isRead ?? false,
       isDelete: isDelete ?? false,
       isNotified: isNotified ?? false);
-  print("update");
-  print(noteBox.keys.length);
-  print(noteKey);
-  print(noteBox.containsKey(noteKey));
+  // print("update");
+  // print(noteBox.keys.length);
+  // print(noteKey);
+  // print(noteBox.containsKey(noteKey));
 
   await noteBox.putAt(noteKey, note);
 }
@@ -115,7 +108,7 @@ Future<List<NoteModel>> getUnreadNotes() async {
   List<NoteModel> notesMap = [];
   for (int i = 0; i < noteBox.length; i++) {
     NoteModel? note = noteBox.getAt(i);
-    if (!note!.isRead && !note.isDelete) {
+    if (!note!.isDelete) {
       notesMap.add(note);
     }
   }
@@ -140,25 +133,12 @@ Future<List<NoteModel>> getDeletedNotes() async {
   return notesMap;
 }
 
-Future<void> deleteAllPermanently() async {
+Future<void> deleteAllPermanently(List<dynamic> noteKeys) async {
   await initializeHive();
   await registerHiveAdapters();
 
   final noteBox = await Hive.openBox<NoteModel>('notes');
-  for (int i = 0; i < noteBox.length; i++) {
-    NoteModel? note = noteBox.getAt(i);
-    if (note!.isDelete) {
-      noteBox.deleteAt(i);
-    }
-  }
-}
-
-Future<void> deleteAllSelectedNote(List<dynamic> noteKey) async {
-  await initializeHive();
-  await registerHiveAdapters();
-
-  final noteBox = await Hive.openBox<NoteModel>('notes');
-  await noteBox.deleteAll(noteKey);
+  await noteBox.deleteAll(noteKeys);
 }
 
 Future<void> reAddAllSelectedNote(List<dynamic> noteKeys) async {
@@ -168,12 +148,11 @@ Future<void> reAddAllSelectedNote(List<dynamic> noteKeys) async {
   final noteBox = await Hive.openBox<NoteModel>('notes');
   for (int i = 0; i < noteKeys.length; i++) {
     NoteModel? note = noteBox.get(noteKeys[i]);
-    note!.isRead = false;
-    note.isDelete = false;
+    note!.isDelete = false;
     note.isNotified = false;
     noteBox.putAt(noteKeys[i], note);
-    print("readding");
-    print(i);
+    // print("readding");
+    // print(i);
   }
 }
 
@@ -189,8 +168,8 @@ Future<void> setDeleteOfAllSelectedNote(List<dynamic> noteKeys) async {
   }
 }
 
-Future<List<NoteModel>> findNotesFromDestination(
-    Position currentLocation, double maxDistance) async {
+Future<List<NoteModel>> findNotesFromDestination(Position currentLocation,
+    double maxDistance, bool isUsedForNotification) async {
   await initializeHive();
   await registerHiveAdapters();
   final noteBox = await Hive.openBox<NoteModel>('notes');
@@ -213,13 +192,15 @@ Future<List<NoteModel>> findNotesFromDestination(
     );
 
     // Filter the notes within the maximum distance
-    return distanceInMeters <= maxDistance &&
-        !note.isDelete &&
-        !note.isNotified;
+    if (isUsedForNotification) {
+      return distanceInMeters <= maxDistance &&
+          !note.isDelete &&
+          !note.isNotified;
+    } else {
+      return distanceInMeters <= maxDistance && !note.isDelete;
+    }
   }).toList();
 
-  // Perform further operations with the filtered notes
-  // For example, display the filtered notes in a list or on the map
   return (filteredNotes);
 }
 
