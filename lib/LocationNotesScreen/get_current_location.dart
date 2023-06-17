@@ -28,7 +28,7 @@ Future<bool> locationPermissionAndServicesEnabled() async {
 Future<Position> getCurrentLocation(context) async {
   bool locationPermissionAndServicesStatus =
       await locationPermissionAndServicesEnabled();
-  if (!locationPermissionAndServicesStatus) {
+  if (locationPermissionAndServicesStatus == false) {
     showPopUp(context);
   }
   // Get the current position

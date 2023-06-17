@@ -1,41 +1,58 @@
 import 'package:geolocator/geolocator.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:to_do_list_app/Database/note_model.dart';
+import 'package:to_do_list_app/Notifications/notification_action.dart';
 import 'package:vibration/vibration.dart';
 
 class LocationNotificationHelper {
   FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
       FlutterLocalNotificationsPlugin();
+
   String notificationChannelId = 'location_channel';
   String notificationChannelName = 'Location Notifications';
   String notificationChannelDescription =
       'Notifications for location-based reminders';
-
-  void initializeNotifications() async {
-    const AndroidInitializationSettings initializationSettingsAndroid =
-        AndroidInitializationSettings('app_icon');
-    DarwinInitializationSettings initializationSettingsDarwin =
-        DarwinInitializationSettings(
-      requestBadgePermission: false,
-      requestSoundPermission: false,
-      requestAlertPermission: true,
-      onDidReceiveLocalNotification: onDidReceiveLocalNotification,
-    );
-    InitializationSettings initializationSettings = InitializationSettings(
-        android: initializationSettingsAndroid,
-        iOS: initializationSettingsDarwin);
-    await flutterLocalNotificationsPlugin.initialize(initializationSettings,
-        onDidReceiveNotificationResponse: onDidReceiveNotificationResponse);
-  }
-
-  void onDidReceiveNotificationResponse(NotificationResponse details) {}
-
-  void onDidReceiveLocalNotification(
-      int id, String? title, String? body, String? payload) {}
-
   void initializeApp() {
     initializeNotifications();
     startLocationMonitoring();
+  }
+
+  void initializeNotifications() async {
+    flutterLocalNotificationsPlugin
+        .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>()!
+        .requestPermission();
+    const AndroidInitializationSettings initializationSettingsAndroid =
+        AndroidInitializationSettings('@mipmap/ic_launcher');
+    InitializationSettings initializationSettings =
+        const InitializationSettings(android: initializationSettingsAndroid);
+    await flutterLocalNotificationsPlugin.initialize(initializationSettings,
+        onDidReceiveBackgroundNotificationResponse:
+            onDidReceiveBackgroundNotificationResponse,
+        onDidReceiveNotificationResponse: onDidReceiveNotificationResponse);
+  }
+
+  @pragma('vm:entry-point')
+  void onDidReceiveBackgroundNotificationResponse(
+      NotificationResponse details) async {
+    if (details.payload == 'location_zone') {
+      // Open your app and move to the second tab
+      if (details.actionId!.compareTo('completed') == 0) {
+        setNotified(details.id);
+        await flutterLocalNotificationsPlugin.cancel(details.id ?? -1);
+      }
+    }
+  }
+
+  void onDidReceiveNotificationResponse(NotificationResponse details) async {
+    if (details.payload == 'location_zone') {
+      if (details.actionId!.compareTo('completed') == 0) {
+        setNotified(details.id);
+        await flutterLocalNotificationsPlugin.cancel(details.id ?? -1);
+      }
+      // Provider.of<BottomNavBarProvider>(context, listen: false)
+      //     .setCurrentIndex(1);
+    }
   }
 
   void startLocationMonitoring() {
@@ -48,53 +65,41 @@ class LocationNotificationHelper {
   }
 
   void checkLocationZoneAndNotifyNotes(Position currentPosition) async {
-    List<NoteModel> notes = await getUnreadNotes();
-    notes.forEach((note) {
-      double targetLatitude = double.parse(note.destination.split(',')[0]);
-      double targetLongitude = double.parse(note.destination.split(',')[1]);
-
-      // Calculate the distance between current and target location
-      double distanceInMeters = Geolocator.distanceBetween(
-        currentPosition.latitude,
-        currentPosition.longitude,
-        targetLatitude,
-        targetLongitude,
-      );
-
-      // Define the radius of the location zone in meters
-      double locationZoneRadius = 100;
-
-      // Check if the user is within the location zone
-      if (distanceInMeters <= locationZoneRadius) {
-        // User is within the location zone
-        showNotification(note);
-        vibrateDevice();
-      }
-    });
+    List<NoteModel> notes =
+        await findNotesFromDestination(currentPosition, 1000);
+    for (var note in notes) {
+      showNotification(note);
+      vibrateDevice();
+    }
   }
 
   void showNotification(NoteModel note) async {
+    List<NotificationAction> notificationActions = [
+      NotificationAction('completed', 'Complete'),
+    ];
+
+    List<AndroidNotificationAction> androidActions =
+        notificationActions.map((action) {
+      return AndroidNotificationAction(
+        action.id,
+        action.title,
+      );
+    }).toList();
+
     AndroidNotificationDetails androidPlatformChannelSpecifics =
         AndroidNotificationDetails(
             notificationChannelId, notificationChannelName,
             channelDescription: notificationChannelDescription,
             importance: Importance.high,
             priority: Priority.high,
-            playSound: true);
+            playSound: true,
+            actions: androidActions);
 
-    DarwinNotificationDetails iOSPlatformChannelSpecifics =
-        const DarwinNotificationDetails(
-      presentAlert: false,
-      presentBadge: false,
-      presentSound: true,
-    ); // check out properties more needed to be added
-
-    NotificationDetails platformChannelSpecifics = NotificationDetails(
-        android: androidPlatformChannelSpecifics,
-        iOS: iOSPlatformChannelSpecifics);
+    NotificationDetails platformChannelSpecifics =
+        NotificationDetails(android: androidPlatformChannelSpecifics);
 
     await flutterLocalNotificationsPlugin.show(
-      0, // Notification ID
+      note.key,
       note.notetitle,
       notificationBody(note),
       platformChannelSpecifics,

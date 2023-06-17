@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
@@ -25,6 +26,7 @@ class _LocationNoteViewState extends State<LocationNoteView> {
       ValueNotifier<List<NoteModel>>([]);
   TextEditingController searchController = TextEditingController();
   List<NoteModel> filteredNotes = [];
+  StreamSubscription<Position>? _positionStreamSubscription;
 
   @override
   void initState() {
@@ -32,13 +34,15 @@ class _LocationNoteViewState extends State<LocationNoteView> {
     Provider.of<BottomNavBarProvider>(context, listen: false)
         .refreshNotifier
         .addListener(_refreshNotes);
+    startLocationMonitoring();
   }
 
   @override
   void dispose() {
     Provider.of<BottomNavBarProvider>(context, listen: false)
         .refreshNotifier
-        .addListener(_refreshNotes);
+        .removeListener(_refreshNotes);
+    _positionStreamSubscription?.cancel();
     super.dispose();
   }
 
@@ -61,8 +65,22 @@ class _LocationNoteViewState extends State<LocationNoteView> {
 
   Future<void> getNotes(currentLocation) async {
     notesNotifier = ValueNotifier<List<NoteModel>>(
-        await findNotesFromDestination(currentLocation, 1000.00));
+        await findNotesFromDestination(currentLocation, 250.00));
     selectedItems = List.filled(notesNotifier.value.length, false);
+  }
+
+  void startLocationMonitoring() {
+    const locationSettings = LocationSettings(
+      accuracy: LocationAccuracy.best,
+      distanceFilter: 250,
+      timeLimit: Duration(seconds: 1),
+    );
+    _positionStreamSubscription =
+        Geolocator.getPositionStream(locationSettings: locationSettings)
+            .listen((Position position) {
+      currentLocationValue.value = position;
+      getNotes(currentLocationValue.value);
+    });
   }
 
   @override
@@ -132,22 +150,6 @@ class _LocationNoteViewState extends State<LocationNoteView> {
                               setState(() {
                                 selectedItems = List.filled(
                                     notesNotifier.value.length, value ?? false);
-                                // selectAll = value ?? false;
-                                // if (selectAll) {
-                                //   selectedItems = List.filled(
-                                //       notesNotifier.value.length, value ?? false);
-                                // } else {
-                                //   selectedItems = List.filled(
-                                //       notesNotifier.value.length, false);
-                                // }
-                                // notesNotifier.value.forEach((note) {
-                                // if (!notesKeys.contains(note.key)) {
-                                //   notesKeys.add(note.key);
-                                // }
-                                //   });
-                                // } else {
-                                //    notesKeys.clear();
-                                // }
                               });
                             },
                           ),
@@ -163,13 +165,15 @@ class _LocationNoteViewState extends State<LocationNoteView> {
                     List<NoteModel> displayedNotes =
                         searchController.text.isEmpty ? list : filteredNotes;
 
-                    if (list.isEmpty) {
+                    if (searchController.text.isEmpty &&
+                        displayedNotes.isEmpty) {
                       return const Center(
                         child: Text("No Notes Available for this Location"),
                       );
                     }
 
-                    if (displayedNotes.isEmpty) {
+                    if (searchController.text.isNotEmpty &&
+                        displayedNotes.isEmpty) {
                       return const Center(
                         child: Text(
                           'No notes found as per the input entered by you.',

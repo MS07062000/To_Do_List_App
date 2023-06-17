@@ -23,13 +23,14 @@ class NoteModelAdapter extends TypeAdapter<NoteModel> {
       checklist: (fields[3] as List?)?.cast<String>(),
       isRead: fields[4] as bool,
       isDelete: fields[5] as bool,
+      isNotified: fields[6] as bool,
     );
   }
 
   @override
   void write(BinaryWriter writer, NoteModel obj) {
     writer
-      ..writeByte(6)
+      ..writeByte(7)
       ..writeByte(0)
       ..write(obj.destination)
       ..writeByte(1)
@@ -41,7 +42,9 @@ class NoteModelAdapter extends TypeAdapter<NoteModel> {
       ..writeByte(4)
       ..write(obj.isRead)
       ..writeByte(5)
-      ..write(obj.isDelete);
+      ..write(obj.isDelete)
+      ..writeByte(6)
+      ..write(obj.isNotified);
   }
 
   @override

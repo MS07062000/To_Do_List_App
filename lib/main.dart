@@ -4,6 +4,7 @@ import 'package:to_do_list_app/AddNoteScreen/add_new_note_view.dart';
 import 'package:to_do_list_app/Database/note_model.dart';
 import 'package:to_do_list_app/HomeScreen/home_view.dart';
 import 'package:to_do_list_app/LocationNotesScreen/location_view.dart';
+import 'package:to_do_list_app/Notifications/notes_notification.dart';
 import 'package:to_do_list_app/TrashScreen/trash_view.dart';
 
 void main() {
@@ -12,10 +13,10 @@ void main() {
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
-
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       title: 'Note App',
       theme: ThemeData(
         primarySwatch: Colors.blue,
@@ -51,12 +52,20 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  late LocationNotificationHelper notificationHelper =
+      LocationNotificationHelper();
   final List<Widget> _screens = [
     const HomeView(),
     const LocationView(),
     const AddNewNoteView(),
     const TrashView()
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    notificationHelper.initializeApp();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -89,7 +98,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   );
                 } else if (bottomNavBarProvider.currentIndex == 3) {
                   return IconButton(
-                    icon: const Icon(Icons.delete),
+                    icon: const Icon(Icons.delete_forever),
                     onPressed: () {
                       deletePermanentlyTheDeletedNotes(
                           context, bottomNavBarProvider);
@@ -117,8 +126,8 @@ class _MyHomePageState extends State<MyHomePage> {
               },
               items: const [
                 BottomNavigationBarItem(
-                  icon: Icon(Icons.home),
-                  label: 'Home',
+                  icon: Icon(Icons.assignment),
+                  label: 'Notes',
                 ),
                 BottomNavigationBarItem(
                   icon: Icon(Icons.location_on),
@@ -129,7 +138,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   label: 'Add Note',
                 ),
                 BottomNavigationBarItem(
-                  icon: Icon(Icons.restore_from_trash_outlined),
+                  icon: Icon(Icons.delete_outlined),
                   label: 'Trash',
                 ),
               ],
