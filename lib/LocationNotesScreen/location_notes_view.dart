@@ -165,6 +165,22 @@ class _LocationNoteViewState extends State<LocationNoteView> {
                               setState(() {
                                 selectedItems = List.filled(
                                     notesNotifier.value.length, value ?? false);
+                                if (value!) {
+                                  for (var note in notesNotifier.value) {
+                                    if (!notesKeys.contains(note.key)) {
+                                      notesKeys.add(note.key);
+                                    }
+                                  }
+                                } else {
+                                  for (var note in notesNotifier.value) {
+                                    if (!notesKeys.contains(note.key)) {
+                                      notesKeys.remove(note.key);
+                                    }
+                                  }
+                                }
+                                Provider.of<BottomNavBarProvider>(context,
+                                        listen: false)
+                                    .setNotesKeys(notesKeys);
                               });
                             },
                           ),
@@ -183,6 +199,9 @@ class _LocationNoteViewState extends State<LocationNoteView> {
                     if (isNotesAvailable &&
                         searchController.text.isEmpty &&
                         displayedNotes.isEmpty) {
+                      Provider.of<BottomNavBarProvider>(context, listen: false)
+                          .isNotesAvailable
+                          .value = false;
                       return const Center(
                         child: Text("No Notes Available for this Location"),
                       );
@@ -191,6 +210,9 @@ class _LocationNoteViewState extends State<LocationNoteView> {
                     if (isNotesAvailable &&
                         searchController.text.isNotEmpty &&
                         displayedNotes.isEmpty) {
+                      Provider.of<BottomNavBarProvider>(context, listen: false)
+                          .isNotesAvailable
+                          .value = false;
                       return const Center(
                         child: Text(
                           'No notes found as per the input entered by you.',
@@ -198,6 +220,9 @@ class _LocationNoteViewState extends State<LocationNoteView> {
                       );
                     }
 
+                    Provider.of<BottomNavBarProvider>(context, listen: false)
+                        .isNotesAvailable
+                        .value = true;
                     return ListView.builder(
                       itemCount: displayedNotes.length,
                       itemBuilder: (context, index) {
@@ -230,17 +255,17 @@ class _LocationNoteViewState extends State<LocationNoteView> {
           onChanged: (value) {
             setState(() {
               selectedItems[noteIndex] = value ?? false;
-              if (selectedItems[noteIndex] == true) {
-                notesKeys.add(note.key);
-                Provider.of<BottomNavBarProvider>(context, listen: false)
-                    .setNotesKeys(notesKeys);
+              if (selectedItems[noteIndex]) {
+                if (!notesKeys.contains(note.key)) {
+                  notesKeys.add(note.key);
+                }
               } else {
                 if (notesKeys.contains(note.key)) {
                   notesKeys.remove(note.key);
-                  Provider.of<BottomNavBarProvider>(context, listen: false)
-                      .setNotesKeys(notesKeys);
                 }
               }
+              Provider.of<BottomNavBarProvider>(context, listen: false)
+                  .setNotesKeys(notesKeys);
             });
           },
         ),

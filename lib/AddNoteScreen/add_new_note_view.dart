@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_osm_plugin/flutter_osm_plugin.dart';
 import 'package:to_do_list_app/main.dart';
 import 'package:to_do_list_app/Database/note_model.dart';
@@ -123,6 +124,9 @@ class _AddNewNoteViewState extends State<AddNewNoteView> {
                 ),
                 const SizedBox(height: 16.0),
                 TextFormField(
+                    inputFormatters: [
+                      FilteringTextInputFormatter.allow(RegExp("[a-zA-Z]")),
+                    ],
                     decoration: const InputDecoration(
                       labelText: 'Title',
                       border: OutlineInputBorder(),

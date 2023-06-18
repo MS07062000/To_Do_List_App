@@ -60,7 +60,7 @@ class _TrashViewState extends State<TrashView> {
     selectedItems = List.filled(notesNotifier.value.length, false);
     setState(() {
       isLoading = false;
-      print(isLoading);
+      // print(isLoading);
     });
   }
 
@@ -155,6 +155,22 @@ class _TrashViewState extends State<TrashView> {
                               () {
                                 selectedItems = List.filled(
                                     notesNotifier.value.length, value ?? false);
+                                if (value!) {
+                                  for (var note in notesNotifier.value) {
+                                    if (!notesKeys.contains(note.key)) {
+                                      notesKeys.add(note.key);
+                                    }
+                                  }
+                                } else {
+                                  for (var note in notesNotifier.value) {
+                                    if (!notesKeys.contains(note.key)) {
+                                      notesKeys.remove(note.key);
+                                    }
+                                  }
+                                }
+                                Provider.of<BottomNavBarProvider>(context,
+                                        listen: false)
+                                    .setNotesKeys(notesKeys);
                               },
                             );
                           },
@@ -214,17 +230,17 @@ class _TrashViewState extends State<TrashView> {
           onChanged: (value) {
             setState(() {
               selectedItems[noteIndex] = value ?? false;
-              if (selectedItems[noteIndex] == true) {
-                notesKeys.add(note.key);
-                Provider.of<BottomNavBarProvider>(context, listen: false)
-                    .setNotesKeys(notesKeys);
+              if (selectedItems[noteIndex]) {
+                if (!notesKeys.contains(note.key)) {
+                  notesKeys.add(note.key);
+                }
               } else {
                 if (notesKeys.contains(note.key)) {
                   notesKeys.remove(note.key);
-                  Provider.of<BottomNavBarProvider>(context, listen: false)
-                      .setNotesKeys(notesKeys);
                 }
               }
+              Provider.of<BottomNavBarProvider>(context, listen: false)
+                  .setNotesKeys(notesKeys);
             });
           },
         ),

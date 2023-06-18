@@ -64,7 +64,7 @@ class LocationNotificationHelper {
   void checkLocationZoneAndNotifyNotes(Position currentPosition) async {
     List<NoteModel> notes =
         await findNotesFromDestination(currentPosition, 500, true);
-    for (var note in notes) {
+    for (NoteModel note in notes) {
       showNotification(note);
       setNotified(note.key);
       vibrateDevice();

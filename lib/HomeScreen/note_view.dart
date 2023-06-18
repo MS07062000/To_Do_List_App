@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:provider/provider.dart';
 import 'package:to_do_list_app/HomeScreen/edit_note_view.dart';
 import 'package:to_do_list_app/HomeScreen/note_content_page.dart';
@@ -63,6 +64,76 @@ class NoteViewState extends State<NoteView> {
     });
   }
 
+  void searchHandler(String input) {
+    setState(() {
+      filteredNotes = notesNotifier.value
+          .where((note) =>
+              note.notetitle.toLowerCase().contains(input.toLowerCase()))
+          .toList();
+    });
+  }
+
+  void handleSelectAllChange(bool? selectAll) {
+    setState(() {
+      selectedItems =
+          List.filled(notesNotifier.value.length, selectAll ?? false);
+      if (selectAll!) {
+        for (var note in notesNotifier.value) {
+          if (!notesKeys.contains(note.key)) {
+            notesKeys.add(note.key);
+          }
+        }
+      } else {
+        for (var note in notesNotifier.value) {
+          if (!notesKeys.contains(note.key)) {
+            notesKeys.remove(note.key);
+          }
+        }
+      }
+      Provider.of<BottomNavBarProvider>(context, listen: false)
+          .setNotesKeys(notesKeys);
+    });
+  }
+
+  void sortHandler(String sortBy, List<NoteModel> notes) {
+    if (sortBy == 'location') {
+      sortByLocation(notes);
+    }
+
+    if (sortBy == 'noteTitle') {
+      sortByNoteTitle(notes);
+    }
+  }
+
+  void sortByNoteTitle(List<NoteModel> notes) {
+    notes.sort((a, b) => a.notetitle.compareTo(b.notetitle));
+  }
+
+  void sortByLocation(List<NoteModel> notes) {
+    if (Provider.of<BottomNavBarProvider>(context, listen: false)
+        .isLocationServicesAvailable
+        .value) {
+      notes.sort((a, b) {
+        Geolocator.getCurrentPosition(timeLimit: const Duration(seconds: 10))
+            .then((location) {
+          final double distanceToA = Geolocator.distanceBetween(
+              location.latitude,
+              location.longitude,
+              double.parse(a.destination.split(',')[0]),
+              double.parse(a.destination.split(',')[1]));
+
+          final double distanceToB = Geolocator.distanceBetween(
+              location.latitude,
+              location.longitude,
+              double.parse(a.destination.split(',')[0]),
+              double.parse(a.destination.split(',')[1]));
+          return distanceToA.compareTo(distanceToB);
+        });
+        return 0;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return isLoading
@@ -80,11 +151,7 @@ class NoteViewState extends State<NoteView> {
                           controller: searchController,
                           onChanged: (value) {
                             setState(() {
-                              filteredNotes = notesNotifier.value
-                                  .where((note) => note.notetitle
-                                      .toLowerCase()
-                                      .contains(value.toLowerCase()))
-                                  .toList();
+                              searchHandler(value);
                             });
                           },
                           decoration: const InputDecoration(
@@ -109,26 +176,7 @@ class NoteViewState extends State<NoteView> {
                             value:
                                 selectedItems.every((isSelected) => isSelected),
                             onChanged: (value) {
-                              setState(() {
-                                selectedItems = List.filled(
-                                    notesNotifier.value.length, value ?? false);
-                                // selectAll = value ?? false;
-                                // if (selectAll) {
-                                //   selectedItems = List.filled(
-                                //       notesNotifier.value.length, value ?? false);
-                                // } else {
-                                //   selectedItems = List.filled(
-                                //       notesNotifier.value.length, false);
-                                // }
-                                // notesNotifier.value.forEach((note) {
-                                // if (!notesKeys.contains(note.key)) {
-                                //   notesKeys.add(note.key);
-                                // }
-                                //   });
-                                // } else {
-                                //    notesKeys.clear();
-                                // }
-                              });
+                              handleSelectAllChange(value);
                             },
                           ),
                         ),
@@ -144,17 +192,41 @@ class NoteViewState extends State<NoteView> {
                         searchController.text.isEmpty ? notes : filteredNotes;
 
                     if (notes.isEmpty) {
+                      Provider.of<BottomNavBarProvider>(context, listen: false)
+                          .isNotesAvailable
+                          .value = false;
                       return const Center(
                         child: Text("No Notes"),
                       );
                     }
 
                     if (displayedNotes.isEmpty) {
+                      Provider.of<BottomNavBarProvider>(context, listen: false)
+                          .isNotesAvailable
+                          .value = false;
+
                       return const Center(
                         child: Text(
                           'No notes found as per the input entered by you.',
                         ),
                       );
+                    }
+
+                    Provider.of<BottomNavBarProvider>(context, listen: false)
+                        .isNotesAvailable
+                        .value = true;
+
+                    if (Provider.of<BottomNavBarProvider>(context,
+                                listen: false)
+                            .sortBy
+                            .value !=
+                        '') {
+                      sortHandler(
+                          Provider.of<BottomNavBarProvider>(context,
+                                  listen: false)
+                              .sortBy
+                              .value,
+                          displayedNotes);
                     }
 
                     return ListView.builder(
@@ -185,20 +257,7 @@ class NoteViewState extends State<NoteView> {
         leading: Checkbox(
           value: selectedItems[noteIndex],
           onChanged: (value) {
-            setState(() {
-              selectedItems[noteIndex] = value ?? false;
-              if (selectedItems[noteIndex] == true) {
-                notesKeys.add(note.key);
-                Provider.of<BottomNavBarProvider>(context, listen: false)
-                    .setNotesKeys(notesKeys);
-              } else {
-                if (notesKeys.contains(note.key)) {
-                  notesKeys.remove(note.key);
-                  Provider.of<BottomNavBarProvider>(context, listen: false)
-                      .setNotesKeys(notesKeys);
-                }
-              }
-            });
+            handleCardCheckBox(value, noteIndex, note);
           },
         ),
         title: Text(note.notetitle),
@@ -214,6 +273,30 @@ class NoteViewState extends State<NoteView> {
         },
       ),
     );
+  }
+
+  void handleCardCheckBox(
+      bool? checkBoxSelected, int noteIndex, NoteModel note) {
+    setState(() {
+      selectedItems[noteIndex] = checkBoxSelected ?? false;
+      if (selectedItems[noteIndex]) {
+        if (!notesKeys.contains(note.key)) {
+          notesKeys.add(note.key);
+        }
+        // print(noteIndex);
+        // print("card add");
+        // print(notesKeys);
+      } else {
+        if (notesKeys.contains(note.key)) {
+          notesKeys.remove(note.key);
+          // print(noteIndex);
+          // print("card remove");
+          // print(notesKeys);
+        }
+      }
+      Provider.of<BottomNavBarProvider>(context, listen: false)
+          .setNotesKeys(notesKeys);
+    });
   }
 
   void navigateToNoteView(BuildContext context, NoteModel note) {
@@ -250,52 +333,3 @@ class NoteViewState extends State<NoteView> {
     return Color.fromARGB(255, r, g, b);
   }
 }
-
-
-
-// void deleteNote(BuildContext context, int noteKey, NoteModel note) {
-  //   showDialog(
-  //     context: context,
-  //     builder: (BuildContext context) {
-  //       return AlertDialog(
-  //         content: Text(
-  //           "Do you want to delete ${note.notetitle}?",
-  //         ),
-  //         actions: <Widget>[
-  //           TextButton(
-  //             child: const Text("No"),
-  //             onPressed: () => Navigator.of(context).pop(),
-  //           ),
-  //           TextButton(
-  //             child: const Text("Yes"),
-  //             onPressed: () {
-  //               if (note.textnote != null) {
-  //                 updateNote(
-  //                     noteKey: noteKey,
-  //                     destination: note.destination,
-  //                     notetitle: note.notetitle,
-  //                     textnote: note.textnote,
-  //                     isRead: true,
-  //                     isDelete: true);
-  //               } else {
-  //                 updateNote(
-  //                     noteKey: noteKey,
-  //                     destination: note.destination,
-  //                     notetitle: note.notetitle,
-  //                     checklist: note.checklist,
-  //                     isRead: true,
-  //                     isDelete: true);
-  //               }
-  //               Navigator.of(context).pop();
-  //               setState(() {
-  //                 isLoading = true;
-  //               });
-  //               getNotes();
-  //               // await Hive.box<NoteModel>('notes').delete(note.key);
-  //             },
-  //           ),
-  //         ],
-  //       );
-  //     },
-  //   );
-  // }

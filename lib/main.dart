@@ -29,9 +29,12 @@ class MyApp extends StatelessWidget {
 class BottomNavBarProvider with ChangeNotifier {
   int _currentIndex = 0;
   List<dynamic> _notesKeys = [];
+  ValueNotifier<bool> refreshNotifier = ValueNotifier<bool>(false);
+  ValueNotifier<bool> isNotesAvailable = ValueNotifier<bool>(false);
+  ValueNotifier<bool> isLocationServicesAvailable = ValueNotifier<bool>(false);
+  ValueNotifier<String> sortBy = ValueNotifier<String>('');
   int get currentIndex => _currentIndex;
   List<dynamic> get noteKeys => _notesKeys;
-  ValueNotifier<bool> refreshNotifier = ValueNotifier<bool>(false);
 
   void setCurrentIndex(int index) {
     _currentIndex = index;
@@ -78,30 +81,50 @@ class _MyHomePageState extends State<MyHomePage> {
           actions: [
             Consumer<BottomNavBarProvider>(
               builder: (context, bottomNavBarProvider, child) {
-                if (bottomNavBarProvider.currentIndex == 0) {
-                  return IconButton(
-                    icon: const Icon(Icons.delete),
-                    onPressed: () {
-                      if (bottomNavBarProvider.noteKeys.isNotEmpty) {
-                        deleteSelectedNotes(context, bottomNavBarProvider);
-                      }
-                    },
+                if (bottomNavBarProvider.isNotesAvailable.value &&
+                        bottomNavBarProvider.currentIndex == 0 ||
+                    bottomNavBarProvider.currentIndex == 1) {
+                  return Row(
+                    children: [
+                      PopupMenuButton(
+                        icon: const Icon(Icons.sort),
+                        itemBuilder: (BuildContext context) => <PopupMenuEntry>[
+                          const PopupMenuItem(
+                            value: 'noteTitle',
+                            child: Text('Sort by Note Title'),
+                          ),
+                          if (bottomNavBarProvider
+                              .isLocationServicesAvailable.value) ...[
+                            const PopupMenuItem(
+                              value: 'location',
+                              child: Text('Sort by Location'),
+                            ),
+                          ],
+                        ],
+                        onSelected: (selectedOption) {
+                          bottomNavBarProvider.sortBy.value = selectedOption;
+                        },
+                      ),
+                      const SizedBox(width: 8),
+                      IconButton(
+                        icon: const Icon(Icons.delete),
+                        onPressed: () {
+                          if (bottomNavBarProvider.noteKeys.isNotEmpty) {
+                            deleteSelectedNotes(context, bottomNavBarProvider);
+                          }
+                        },
+                      ),
+                    ],
                   );
-                } else if (bottomNavBarProvider.currentIndex == 1) {
-                  return IconButton(
-                    icon: const Icon(Icons.delete),
-                    onPressed: () {
-                      if (bottomNavBarProvider.noteKeys.isNotEmpty) {
-                        deleteSelectedNotes(context, bottomNavBarProvider);
-                      }
-                    },
-                  );
-                } else if (bottomNavBarProvider.currentIndex == 3) {
+                } else if (bottomNavBarProvider.isNotesAvailable.value &&
+                    bottomNavBarProvider.currentIndex == 3) {
                   return IconButton(
                     icon: const Icon(Icons.delete_forever),
                     onPressed: () {
                       deletePermanentlyTheDeletedNotes(
-                          context, bottomNavBarProvider);
+                        context,
+                        bottomNavBarProvider,
+                      );
                     },
                   );
                 } else {

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:provider/provider.dart';
+import 'package:to_do_list_app/main.dart';
 
 Future<bool> locationPermissionAndServicesEnabled() async {
   bool serviceEnabled;
@@ -28,7 +30,7 @@ Future<bool> locationPermissionAndServicesEnabled() async {
 Future<Position> getCurrentLocation(context) async {
   bool locationPermissionAndServicesStatus =
       await locationPermissionAndServicesEnabled();
-  if (locationPermissionAndServicesStatus == false) {
+  if (!locationPermissionAndServicesStatus) {
     showPopUp(context);
   }
   // Get the current position
@@ -37,6 +39,9 @@ Future<Position> getCurrentLocation(context) async {
     position = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.high,
         timeLimit: const Duration(seconds: 10));
+    Provider.of<BottomNavBarProvider>(context, listen: false)
+        .isLocationServicesAvailable
+        .value = true;
     return position;
   } catch (e) {
     position = Position(
