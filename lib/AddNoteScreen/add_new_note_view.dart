@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_osm_plugin/flutter_osm_plugin.dart';
-import 'package:to_do_list_app/main.dart';
+import 'package:to_do_list_app/Main/bottom_navbar_provider.dart';
 import 'package:to_do_list_app/Database/note_model.dart';
 import 'package:provider/provider.dart';
 import 'package:to_do_list_app/Map/osm_map_view.dart';
@@ -220,7 +220,8 @@ class _AddNewNoteViewState extends State<AddNewNoteView> {
                       } else {
                         Provider.of<BottomNavBarProvider>(context,
                                 listen: false)
-                            .setCurrentIndex(0);
+                            .currentIndex
+                            .value = 0;
                       }
                     }
                   },

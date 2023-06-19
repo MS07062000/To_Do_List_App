@@ -3,11 +3,11 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:provider/provider.dart';
+import 'package:to_do_list_app/Database/note_model.dart';
+import 'package:to_do_list_app/HomeScreen/edit_note_view.dart';
 import 'package:to_do_list_app/HomeScreen/note_content_page.dart';
 import 'package:to_do_list_app/LocationNotesScreen/get_current_location.dart';
-import 'package:to_do_list_app/main.dart';
-import '../Database/note_model.dart';
-import '../HomeScreen/edit_note_view.dart';
+import 'package:to_do_list_app/Main/bottom_navbar_provider.dart';
 
 class LocationNoteView extends StatefulWidget {
   const LocationNoteView({super.key});
@@ -199,9 +199,9 @@ class _LocationNoteViewState extends State<LocationNoteView> {
                     if (isNotesAvailable &&
                         searchController.text.isEmpty &&
                         displayedNotes.isEmpty) {
-                      Provider.of<BottomNavBarProvider>(context, listen: false)
-                          .isNotesAvailable
-                          .value = false;
+                      // Provider.of<BottomNavBarProvider>(context, listen: false)
+                      //     .isNotesAvailable
+                      //     .value = false;
                       return const Center(
                         child: Text("No Notes Available for this Location"),
                       );
@@ -210,9 +210,9 @@ class _LocationNoteViewState extends State<LocationNoteView> {
                     if (isNotesAvailable &&
                         searchController.text.isNotEmpty &&
                         displayedNotes.isEmpty) {
-                      Provider.of<BottomNavBarProvider>(context, listen: false)
-                          .isNotesAvailable
-                          .value = false;
+                      // Provider.of<BottomNavBarProvider>(context, listen: false)
+                      //     .isNotesAvailable
+                      //     .value = false;
                       return const Center(
                         child: Text(
                           'No notes found as per the input entered by you.',
@@ -220,9 +220,9 @@ class _LocationNoteViewState extends State<LocationNoteView> {
                       );
                     }
 
-                    Provider.of<BottomNavBarProvider>(context, listen: false)
-                        .isNotesAvailable
-                        .value = true;
+                    // Provider.of<BottomNavBarProvider>(context, listen: false)
+                    //     .isNotesAvailable
+                    //     .value = true;
                     return ListView.builder(
                       itemCount: displayedNotes.length,
                       itemBuilder: (context, index) {

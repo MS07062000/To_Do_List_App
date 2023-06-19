@@ -1,10 +1,9 @@
 import 'dart:math';
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:to_do_list_app/Database/note_model.dart';
 import 'package:to_do_list_app/HomeScreen/note_content_page.dart';
-import 'package:to_do_list_app/main.dart';
+import 'package:to_do_list_app/Main/bottom_navbar_provider.dart';
 
 class TrashView extends StatefulWidget {
   const TrashView({super.key});

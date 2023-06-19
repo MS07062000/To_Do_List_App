@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:provider/provider.dart';
-import 'package:to_do_list_app/main.dart';
+import 'package:to_do_list_app/Main/bottom_navbar_provider.dart';
 
 Future<bool> locationPermissionAndServicesEnabled() async {
   bool serviceEnabled;

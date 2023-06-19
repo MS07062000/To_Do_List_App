@@ -6,7 +6,7 @@ import 'package:provider/provider.dart';
 import 'package:to_do_list_app/HomeScreen/edit_note_view.dart';
 import 'package:to_do_list_app/HomeScreen/note_content_page.dart';
 import 'package:to_do_list_app/Database/note_model.dart';
-import 'package:to_do_list_app/main.dart';
+import 'package:to_do_list_app/Main/bottom_navbar_provider.dart';
 
 class NoteView extends StatefulWidget {
   const NoteView({super.key});
@@ -195,6 +195,7 @@ class NoteViewState extends State<NoteView> {
                       Provider.of<BottomNavBarProvider>(context, listen: false)
                           .isNotesAvailable
                           .value = false;
+
                       return const Center(
                         child: Text("No Notes"),
                       );
@@ -216,6 +217,11 @@ class NoteViewState extends State<NoteView> {
                         .isNotesAvailable
                         .value = true;
 
+                    print("inside note view");
+                    print(Provider.of<BottomNavBarProvider>(context,
+                            listen: false)
+                        .isNotesAvailable);
+                    print("outside note view");
                     if (Provider.of<BottomNavBarProvider>(context,
                                 listen: false)
                             .sortBy
