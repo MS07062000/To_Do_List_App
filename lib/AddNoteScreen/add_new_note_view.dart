@@ -103,6 +103,10 @@ class _AddNewNoteViewState extends State<AddNewNoteView> {
   Widget build(BuildContext context) {
     return Scaffold(
       resizeToAvoidBottomInset: true,
+      appBar: AppBar(
+        title: const Text('Location Notes'),
+        automaticallyImplyLeading: false,
+      ),
       body: SingleChildScrollView(
         controller: _scrollController,
         child: Padding(

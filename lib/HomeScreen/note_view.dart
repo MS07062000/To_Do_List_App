@@ -2,11 +2,10 @@ import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:provider/provider.dart';
 import 'package:to_do_list_app/HomeScreen/edit_note_view.dart';
 import 'package:to_do_list_app/HomeScreen/note_content_page.dart';
 import 'package:to_do_list_app/Database/note_model.dart';
-import 'package:to_do_list_app/Main/bottom_navbar_provider.dart';
+import 'package:to_do_list_app/LocationNotesScreen/get_current_location.dart';
 
 class NoteView extends StatefulWidget {
   const NoteView({super.key});
@@ -22,59 +21,70 @@ class NoteViewState extends State<NoteView> {
   List<bool> selectedItems = [];
   List<dynamic> notesKeys = [];
   TextEditingController searchController = TextEditingController();
+  List<NoteModel> fetchedNotes = [];
   List<NoteModel> displayedNotes = [];
   List<NoteModel> filteredNotes = [];
   @override
   void initState() {
     super.initState();
     getNotes();
-    Provider.of<BottomNavBarProvider>(context, listen: false)
-        .refreshNotifier
-        .addListener(_refreshNotes);
+    // Provider.of<BottomNavBarProvider>(context, listen: false)
+    //     .refreshNotifier
+    //     .addListener(_refreshNotes);
   }
 
   @override
   void dispose() {
-    Provider.of<BottomNavBarProvider>(context, listen: false)
-        .refreshNotifier
-        .addListener(_refreshNotes);
+    // Provider.of<BottomNavBarProvider>(context, listen: false)
+    //     .refreshNotifier
+    //     .addListener(_refreshNotes);
     super.dispose();
   }
 
-  void _refreshNotes() {
-    if (!Provider.of<BottomNavBarProvider>(context, listen: false)
-        .refreshNotifier
-        .value) {
-      return;
-    }
-    if (mounted) {
-      setState(() {
-        isLoading = true;
-      });
-      getNotes();
-    }
-    Provider.of<BottomNavBarProvider>(context, listen: false)
-        .refreshNotifier
-        .value = false;
-  }
+  // void _refreshNotes() {
+  //   if (!Provider.of<BottomNavBarProvider>(context, listen: false)
+  //       .refreshNotifier
+  //       .value) {
+  //     return;
+  //   }
+  //   if (mounted) {
+  //     setState(() {
+  //       isLoading = true;
+  //     });
+  //     getNotes();
+  //   }
+  //   Provider.of<BottomNavBarProvider>(context, listen: false)
+  //       .refreshNotifier
+  //       .value = false;
+  // }
 
   Future<void> getNotes() async {
     // notesNotifier = ValueNotifier<List<NoteModel>>(await getUnreadNotes());
     //  selectedItems = List.filled(notesNotifier.value.length, false);
+
     List<NoteModel> notes = await getUnreadNotes();
     setState(() {
-      displayedNotes = notes;
+      fetchedNotes = notes;
+      displayedNotes = fetchedNotes;
       selectedItems = List.filled(displayedNotes.length, false);
+      locationPermissionAndServicesEnabled().then((value) {
+        if (value) {
+          isLocationServicesAvailable = true;
+        } else {
+          isLocationServicesAvailable = false;
+        }
+      });
       isLoading = false;
     });
   }
 
   void searchHandler(String input) {
     setState(() {
-      filteredNotes = displayedNotes
+      filteredNotes = fetchedNotes
           .where((note) =>
               note.notetitle.toLowerCase().contains(input.toLowerCase()))
           .toList();
+      displayedNotes = filteredNotes;
     });
   }
 
@@ -83,19 +93,10 @@ class NoteViewState extends State<NoteView> {
       selectedItems = List.filled(displayedNotes.length, selectAll ?? false);
       // List.filled(notesNotifier.value.length, selectAll ?? false);
       if (selectAll!) {
-        for (var note in displayedNotes) {
-          //notesNotifier.value
-          if (!notesKeys.contains(note.key)) {
-            notesKeys.add(note.key);
-          }
-        }
+        notesKeys = List.filled(
+            displayedNotes.length, (index) => displayedNotes[index].key);
       } else {
-        for (var note in displayedNotes) {
-          //notesNotifier.value
-          if (!notesKeys.contains(note.key)) {
-            notesKeys.remove(note.key);
-          }
-        }
+        notesKeys = [];
       }
       // Provider.of<BottomNavBarProvider>(context, listen: false)
       //     .setNotesKeys(notesKeys);
@@ -119,9 +120,7 @@ class NoteViewState extends State<NoteView> {
   }
 
   void sortByLocation() {
-    if (Provider.of<BottomNavBarProvider>(context, listen: false)
-        .isLocationServicesAvailable
-        .value) {
+    if (isLocationServicesAvailable) {
       setState(() {
         displayedNotes.sort((a, b) {
           Geolocator.getCurrentPosition(timeLimit: const Duration(seconds: 10))
@@ -194,7 +193,7 @@ class NoteViewState extends State<NoteView> {
             ),
             body: Column(
               children: [
-                if (displayedNotes.isNotEmpty) ...[
+                if (fetchedNotes.isNotEmpty) ...[
                   //notesNotifier.value
                   Row(
                     children: [
@@ -239,12 +238,7 @@ class NoteViewState extends State<NoteView> {
                       ],
                     ),
                 ],
-                if (displayedNotes.isEmpty) ...[
-                  const Expanded(
-                      child: Center(
-                    child: Text("No Notes"),
-                  ))
-                ] else if (searchController.text.isNotEmpty &&
+                if (searchController.text.isNotEmpty &&
                     filteredNotes.isEmpty) ...[
                   const Expanded(
                       child: Center(
@@ -252,21 +246,28 @@ class NoteViewState extends State<NoteView> {
                       'No notes found as per the input entered by you.',
                     ),
                   ))
-                ] else if (searchController.text.isNotEmpty &&
-                    filteredNotes.isNotEmpty) ...[
-                  Expanded(
-                      child: ListView.builder(
-                    itemCount: filteredNotes.length,
-                    itemBuilder: (context, index) {
-                      NoteModel currentNote = filteredNotes[index];
-                      return Padding(
-                        padding: const EdgeInsets.only(
-                            left: 8.0, right: 8.0, top: 0, bottom: 0),
-                        child: buildNoteCard(context, index, currentNote),
-                      );
-                    },
+                ] else if (displayedNotes.isEmpty) ...[
+                  const Expanded(
+                      child: Center(
+                    child: Text("No Notes"),
                   ))
-                ] else ...[
+                ]
+                // ] else if (searchController.text.isNotEmpty &&
+                //     filteredNotes.isNotEmpty) ...[
+                //   Expanded(
+                //       child: ListView.builder(
+                //     itemCount: filteredNotes.length,
+                //     itemBuilder: (context, index) {
+                //       NoteModel currentNote = filteredNotes[index];
+                //       return Padding(
+                //         padding: const EdgeInsets.only(
+                //             left: 8.0, right: 8.0, top: 0, bottom: 0),
+                //         child: buildNoteCard(context, index, currentNote),
+                //       );
+                //     },
+                //   ))
+                // ]
+                else ...[
                   Expanded(
                       child: ListView.builder(
                     itemCount: displayedNotes.length,
@@ -311,31 +312,40 @@ class NoteViewState extends State<NoteView> {
   }
 
   Widget buildNoteCard(BuildContext context, int noteIndex, NoteModel note) {
-    return Card(
-      child: ListTile(
-        shape: RoundedRectangleBorder(
-          side: BorderSide(color: _getRandomColor(), width: 1),
-          borderRadius: BorderRadius.circular(5),
-        ),
-        leading: Checkbox(
-          value: selectedItems[noteIndex],
-          onChanged: (value) {
-            handleCardCheckBox(value, noteIndex, note);
-          },
-        ),
-        title: Text(note.notetitle),
-        trailing: IconButton(
-          icon: const Icon(Icons.edit),
-          onPressed: () {
-            navigateToNoteEdit(context, note);
-          },
-        ),
-        onTap: () {
-          // Handle tap on note card
-          navigateToNoteView(context, note);
+    return GestureDetector(
+        onLongPress: () {
+          setState(() {
+            selectedItems[noteIndex] = true;
+            handleCardCheckBox(true, noteIndex, note);
+          });
         },
-      ),
-    );
+        child: Card(
+          child: ListTile(
+            shape: RoundedRectangleBorder(
+              side: BorderSide(color: _getRandomColor(), width: 1),
+              borderRadius: BorderRadius.circular(5),
+            ),
+            leading: selectedItems.contains(true)
+                ? Checkbox(
+                    value: selectedItems[noteIndex],
+                    onChanged: (value) {
+                      handleCardCheckBox(value, noteIndex, note);
+                    },
+                  )
+                : null,
+            title: Text(note.notetitle),
+            trailing: IconButton(
+              icon: const Icon(Icons.edit),
+              onPressed: () {
+                navigateToNoteEdit(context, note);
+              },
+            ),
+            onTap: () {
+              // Handle tap on note card
+              navigateToNoteView(context, note);
+            },
+          ),
+        ));
   }
 
   void handleCardCheckBox(
@@ -351,6 +361,7 @@ class NoteViewState extends State<NoteView> {
           notesKeys.remove(note.key);
         }
       }
+      print(notesKeys);
       // Provider.of<BottomNavBarProvider>(context, listen: false)
       //     .setNotesKeys(notesKeys);
     });
