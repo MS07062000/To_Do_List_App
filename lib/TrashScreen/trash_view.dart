@@ -1,9 +1,9 @@
-import 'dart:math';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:to_do_list_app/Database/note_model.dart';
+import 'package:to_do_list_app/Helper/helper.dart';
 import 'package:to_do_list_app/HomeScreen/note_content_page.dart';
-import 'package:to_do_list_app/Main/bottom_navbar_provider.dart';
+// import 'package:provider/provider.dart';
+// import 'package:to_do_list_app/Main/bottom_navbar_provider.dart';
 
 class TrashView extends StatefulWidget {
   const TrashView({super.key});
@@ -35,6 +35,7 @@ class _TrashViewState extends State<TrashView> {
     // Provider.of<BottomNavBarProvider>(context, listen: false)
     //     .refreshNotifier
     //     .addListener(_refreshNotes);
+    searchController.dispose();
     super.dispose();
   }
 
@@ -113,9 +114,8 @@ class _TrashViewState extends State<TrashView> {
   }
 
   void reAddSelectedItems() {
-    reAddAllSelectedNote(
-            Provider.of<BottomNavBarProvider>(context, listen: false).noteKeys)
-        .then((value) {
+    // Provider.of<BottomNavBarProvider>(context, listen: false).noteKeys
+    reAddAllSelectedNote(notesKeys).then((value) {
       setState(() {
         isLoading = true;
       });
@@ -302,31 +302,34 @@ class _TrashViewState extends State<TrashView> {
   }
 
   Widget buildNoteCard(BuildContext context, int noteIndex, NoteModel note) {
-    return Card(
-      child: ListTile(
-        shape: RoundedRectangleBorder(
-          side: BorderSide(color: _getRandomColor(), width: 1),
-          borderRadius: BorderRadius.circular(5),
-        ),
-        leading: GestureDetector(
-          onLongPress: () {
-            setState(() {
-              selectedItems[noteIndex] = !selectedItems[noteIndex];
-            });
-          },
-          child: Checkbox(
-            value: selectedItems[noteIndex],
-            onChanged: (value) {
-              handleCardCheckBox(value, noteIndex, note);
+    return GestureDetector(
+        onLongPress: () {
+          setState(() {
+            selectedItems[noteIndex] = true;
+            handleCardCheckBox(true, noteIndex, note);
+          });
+        },
+        child: Card(
+          child: ListTile(
+            shape: RoundedRectangleBorder(
+              side: BorderSide(color: getRandomColor(), width: 1),
+              borderRadius: BorderRadius.circular(5),
+            ),
+            leading: selectedItems.contains(true)
+                ? Checkbox(
+                    value: selectedItems[noteIndex],
+                    onChanged: (value) {
+                      handleCardCheckBox(value, noteIndex, note);
+                    },
+                  )
+                : null,
+            title: Text(note.notetitle),
+            onTap: () {
+              // Handle tap on note card
+              navigateToNoteView(context, note);
             },
           ),
-        ),
-        title: Text(note.notetitle),
-        onTap: () {
-          navigateToNoteView(context, note);
-        },
-      ),
-    );
+        ));
   }
 
   void handleCardCheckBox(
@@ -420,15 +423,6 @@ class _TrashViewState extends State<TrashView> {
         );
       },
     );
-  }
-
-  Color _getRandomColor() {
-    final random = Random();
-    final r = random.nextInt(256);
-    final g = random.nextInt(256);
-    final b = random.nextInt(256);
-
-    return Color.fromARGB(255, r, g, b);
   }
 }
 

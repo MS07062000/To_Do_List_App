@@ -1,9 +1,9 @@
 import 'dart:async';
-import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 // import 'package:provider/provider.dart';
 import 'package:to_do_list_app/Database/note_model.dart';
+import 'package:to_do_list_app/Helper/helper.dart';
 import 'package:to_do_list_app/HomeScreen/edit_note_view.dart';
 import 'package:to_do_list_app/HomeScreen/note_content_page.dart';
 import 'package:to_do_list_app/LocationNotesScreen/get_current_location.dart';
@@ -53,6 +53,7 @@ class _LocationNoteViewState extends State<LocationNoteView> {
     //     .refreshNotifier
     //     .removeListener(_refreshNotes);
     _positionStreamSubscription?.cancel();
+    searchController.dispose();
     super.dispose();
   }
 
@@ -325,7 +326,7 @@ class _LocationNoteViewState extends State<LocationNoteView> {
         child: Card(
           child: ListTile(
             shape: RoundedRectangleBorder(
-              side: BorderSide(color: _getRandomColor(), width: 1),
+              side: BorderSide(color: getRandomColor(), width: 1),
               borderRadius: BorderRadius.circular(5),
             ),
             leading: selectedItems.contains(true)
@@ -420,15 +421,6 @@ class _LocationNoteViewState extends State<LocationNoteView> {
         );
       },
     );
-  }
-
-  Color _getRandomColor() {
-    final random = Random();
-    final r = random.nextInt(256);
-    final g = random.nextInt(256);
-    final b = random.nextInt(256);
-
-    return Color.fromARGB(255, r, g, b);
   }
 }
 

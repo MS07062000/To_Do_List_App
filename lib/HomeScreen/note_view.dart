@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'dart:math';
+import 'package:to_do_list_app/Helper/helper.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:to_do_list_app/HomeScreen/edit_note_view.dart';
@@ -322,7 +322,7 @@ class NoteViewState extends State<NoteView> {
         child: Card(
           child: ListTile(
             shape: RoundedRectangleBorder(
-              side: BorderSide(color: _getRandomColor(), width: 1),
+              side: BorderSide(color: getRandomColor(), width: 1),
               borderRadius: BorderRadius.circular(5),
             ),
             leading: selectedItems.contains(true)
@@ -361,7 +361,7 @@ class NoteViewState extends State<NoteView> {
           notesKeys.remove(note.key);
         }
       }
-      print(notesKeys);
+      // print(notesKeys);
       // Provider.of<BottomNavBarProvider>(context, listen: false)
       //     .setNotesKeys(notesKeys);
     });
@@ -422,25 +422,5 @@ class NoteViewState extends State<NoteView> {
         );
       },
     );
-  }
-
-  Color _getRandomColor() {
-    final random = Random();
-    final r = random.nextInt(256);
-    final g = random.nextInt(256);
-    final b = random.nextInt(256);
-
-    return Color.fromARGB(255, r, g, b);
-  }
-}
-
-class NoteViewProvider extends ChangeNotifier {
-  ValueNotifier<List<NoteModel>> displayedNotes =
-      ValueNotifier<List<NoteModel>>([]);
-  ValueNotifier<bool> isNotesKeysAvailable = ValueNotifier<bool>(false);
-
-  void setDisplayedNotes(List<NoteModel> notes) {
-    displayedNotes.value = notes;
-    notifyListeners();
   }
 }
