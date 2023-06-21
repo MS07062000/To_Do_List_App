@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-// import 'package:provider/provider.dart';
+import 'package:provider/provider.dart';
 import 'package:to_do_list_app/AddNoteScreen/add_new_note_view.dart';
 // import 'package:to_do_list_app/Database/duplicate_data.dart';
 import 'package:to_do_list_app/HomeScreen/home_view.dart';
 import 'package:to_do_list_app/LocationNotesScreen/location_view.dart';
-// import 'package:to_do_list_app/Main/bottom_navbar_provider.dart';
+import 'package:to_do_list_app/Main/bottom_navbar_provider.dart';
 import 'package:to_do_list_app/Notifications/notes_notification.dart';
 import 'package:to_do_list_app/TrashScreen/trash_view.dart';
 
@@ -24,7 +24,6 @@ class _MyHomePageState extends State<MyHomePage> {
     const AddNewNoteView(),
     const TrashView()
   ];
-  int _selectedIndex = 0;
   @override
   void initState() {
     super.initState();
@@ -37,92 +36,57 @@ class _MyHomePageState extends State<MyHomePage> {
     super.dispose();
   }
 
-  void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return ChangeNotifierProvider<BottomNavBarProvider>(
+      create: (_) => BottomNavBarProvider(),
+      builder: (context, child) => Scaffold(
         // appBar: const MyAppBar(),
-        body: Center(child: _screens.elementAt(_selectedIndex)),
-        bottomNavigationBar: BottomNavigationBar(
-          type: BottomNavigationBarType.fixed,
-          currentIndex: _selectedIndex,
-          onTap: (index) {
-            _onItemTapped(index);
+        body: ValueListenableBuilder(
+          valueListenable:
+              Provider.of<BottomNavBarProvider>(context, listen: false)
+                  .currentIndex,
+          builder: (context, currentIndex, child) {
+            return _screens[currentIndex];
           },
-          items: const [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.assignment),
-              label: 'Notes',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.location_on),
-              label: 'Location Notes',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.add),
-              label: 'Add Note',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.delete_outlined),
-              label: 'Trash',
-            ),
-          ],
-        ));
+        ),
+        bottomNavigationBar: ValueListenableBuilder(
+          valueListenable:
+              Provider.of<BottomNavBarProvider>(context, listen: false)
+                  .currentIndex,
+          builder: (context, currentIndex, child) {
+            return BottomNavigationBar(
+              type: BottomNavigationBarType.fixed,
+              currentIndex: currentIndex,
+              onTap: (index) {
+                Provider.of<BottomNavBarProvider>(context, listen: false)
+                    .currentIndex
+                    .value = index;
+              },
+              items: const [
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.assignment),
+                  label: 'Notes',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.location_on),
+                  label: 'Location Notes',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.add),
+                  label: 'Add Note',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.delete_outlined),
+                  label: 'Trash',
+                ),
+              ],
+            );
+          },
+        ),
+      ),
+    );
   }
-
-  //ChangeNotifierProvider<BottomNavBarProvider>(
-  //   create: (_) => BottomNavBarProvider(),
-  //   builder: (context, child) => Scaffold(
-  //     // appBar: const MyAppBar(),
-  //     body: ValueListenableBuilder(
-  //       valueListenable:
-  //           Provider.of<BottomNavBarProvider>(context, listen: false)
-  //               .currentIndex,
-  //       builder: (context, currentIndex, child) {
-  //         return _screens[currentIndex];
-  //       },
-  //     ),
-  //     bottomNavigationBar: ValueListenableBuilder(
-  //       valueListenable:
-  //           Provider.of<BottomNavBarProvider>(context, listen: false)
-  //               .currentIndex,
-  //       builder: (context, currentIndex, child) {
-  //         return BottomNavigationBar(
-  //           type: BottomNavigationBarType.fixed,
-  //           currentIndex: currentIndex,
-  //           onTap: (index) {
-  //             Provider.of<BottomNavBarProvider>(context, listen: false)
-  //                 .currentIndex
-  //                 .value = index;
-  //           },
-  //           items: const [
-  //             BottomNavigationBarItem(
-  //               icon: Icon(Icons.assignment),
-  //               label: 'Notes',
-  //             ),
-  //             BottomNavigationBarItem(
-  //               icon: Icon(Icons.location_on),
-  //               label: 'Location Notes',
-  //             ),
-  //             BottomNavigationBarItem(
-  //               icon: Icon(Icons.add),
-  //               label: 'Add Note',
-  //             ),
-  //             BottomNavigationBarItem(
-  //               icon: Icon(Icons.delete_outlined),
-  //               label: 'Trash',
-  //             ),
-  //           ],
-  //         );
-  //       },
-  //     ),
-  //   ),
-  // );
 
   // void deleteSelectedNotes(
   //     BuildContext context, BottomNavBarProvider bottomNavBarProvider) {
