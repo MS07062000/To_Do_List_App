@@ -58,12 +58,17 @@ class LocationNotificationHelper {
   }
 
   void startLocationMonitoring() {
+    print("Inside notification");
     LocationSettings locationSettings = const LocationSettings(
         accuracy: LocationAccuracy.bestForNavigation,
         distanceFilter: 10,
         timeLimit: Duration(minutes: 1));
     Geolocator.getPositionStream(locationSettings: locationSettings).listen(
-        (Position position) => checkLocationZoneAndNotifyNotes(position));
+        (Position position) {
+      checkLocationZoneAndNotifyNotes(position);
+    }, onError: (dynamic error) {
+      startLocationMonitoring();
+    });
   }
 
   void checkLocationZoneAndNotifyNotes(Position currentPosition) async {

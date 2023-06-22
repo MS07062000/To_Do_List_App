@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_osm_plugin/flutter_osm_plugin.dart';
+import 'package:to_do_list_app/Database/predefined_location_model.dart';
 import 'package:to_do_list_app/Main/bottom_navbar_provider.dart';
 import 'package:to_do_list_app/Database/note_model.dart';
 import 'package:provider/provider.dart';
@@ -19,6 +20,9 @@ class AddNewNoteView extends StatefulWidget {
 
 class _AddNewNoteViewState extends State<AddNewNoteView> {
   final formKey = GlobalKey<FormState>();
+  String _destinationType = 'predefinedLocation';
+  late String _selectedLocation;
+  late List<dynamic> predefinedLocations;
   final TextEditingController _destinationController = TextEditingController();
   final TextEditingController _noteTitleController = TextEditingController();
   final TextEditingController _textNoteController = TextEditingController();
@@ -29,9 +33,13 @@ class _AddNewNoteViewState extends State<AddNewNoteView> {
   @override
   void initState() {
     super.initState();
+    getLocationName();
     if (widget.note != null) {
       // Initialize the form fields with the values from the existing note
+      _destinationType = 'map';
       _destinationController.text = widget.note!.destination;
+      _setSelectedLocation(widget.note!.destination);
+
       _noteTitleController.text = widget.note!.notetitle;
       if (widget.note!.textnote != null) {
         _textNoteController.text = widget.note!.textnote!;
@@ -56,6 +64,7 @@ class _AddNewNoteViewState extends State<AddNewNoteView> {
       _checkListController
           .addAll([TextEditingController(), TextEditingController()]);
       _checklistItems.addAll(['', '']);
+      _setSelectedLocation(null);
     }
   }
 
@@ -68,6 +77,35 @@ class _AddNewNoteViewState extends State<AddNewNoteView> {
     super.dispose();
   }
 
+  void _setSelectedLocation(String? coordinates) async {
+    dynamic locationName = await getLocation(coordinates!);
+    if (locationName != null) {
+      setState(() {
+        _selectedLocation = locationName;
+        _destinationController.text = '';
+        _destinationType = 'predefinedLocation';
+      });
+    } else {
+      setState(() {
+        _selectedLocation = predefinedLocations[0];
+        _destinationType = 'map';
+      });
+    }
+  }
+
+  Future<void> getLocationName() async {
+    List<dynamic> locationList = await getPredefinedLocations();
+    setState(() {
+      predefinedLocations = locationList;
+    });
+  }
+
+  void _onDestinationTypeChanged(String isPredefinedLocation) {
+    setState(() {
+      _destinationType = isPredefinedLocation;
+    });
+  }
+
   void _onDestinationTap() async {
     GeoPoint latLng = await Navigator.of(context).push(
       MaterialPageRoute(
@@ -76,6 +114,12 @@ class _AddNewNoteViewState extends State<AddNewNoteView> {
     );
     setState(() {
       _destinationController.text = '${latLng.latitude}, ${latLng.longitude}';
+    });
+  }
+
+  void _onPredefinedLocation(location) {
+    setState(() {
+      _selectedLocation = location;
     });
   }
 
@@ -118,16 +162,67 @@ class _AddNewNoteViewState extends State<AddNewNoteView> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                TextFormField(
-                  decoration: const InputDecoration(
-                    labelText: 'Destination',
-                    suffixIcon: Icon(Icons.map),
-                    border: OutlineInputBorder(),
+                const Text(
+                  'Select Destination From :',
+                  style: TextStyle(
+                    fontSize: 16.0,
+                    fontWeight: FontWeight.normal,
                   ),
-                  controller: _destinationController,
-                  onTap: _onDestinationTap,
-                  readOnly: true,
                 ),
+                const SizedBox(height: 10.0),
+                Row(
+                  children: [
+                    Expanded(
+                      child: RadioListTile(
+                        title: const Text('Predefined Location'),
+                        value: 'predefinedLocation',
+                        groupValue: _destinationType,
+                        onChanged: ((value) =>
+                            _onDestinationTypeChanged(value!)),
+                      ),
+                    ),
+                    Expanded(
+                      child: RadioListTile(
+                        title: const Text('Map'),
+                        value: 'map',
+                        groupValue: _destinationType,
+                        onChanged: ((value) =>
+                            _onDestinationTypeChanged(value!)),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10.0),
+                if (_destinationType == 'predefinedLocation')
+                  TextFormField(
+                    decoration: const InputDecoration(
+                      labelText: 'Destination',
+                      suffixIcon: Icon(Icons.map),
+                      border: OutlineInputBorder(),
+                    ),
+                    controller: _destinationController,
+                    onTap: _onDestinationTap,
+                    readOnly: true,
+                  )
+                else
+                  SizedBox(
+                    height: 150, // Set the maximum height of the dropdown menu
+                    child: SingleChildScrollView(
+                      child: DropdownButtonFormField(
+                          items: predefinedLocations
+                              .map<DropdownMenuItem<dynamic>>((dynamic value) {
+                            return DropdownMenuItem<String>(
+                              value: value,
+                              child: Text(
+                                value,
+                                style: const TextStyle(fontSize: 20),
+                              ),
+                            );
+                          }).toList(),
+                          value: _selectedLocation,
+                          onChanged: (value) => _onPredefinedLocation(value)),
+                    ),
+                  ),
                 const SizedBox(height: 16.0),
                 TextFormField(
                     inputFormatters: [
