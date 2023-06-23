@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:to_do_list_app/Database/predefined_location_model.dart';
 import 'package:to_do_list_app/Helper/helper.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
@@ -24,10 +25,13 @@ class NoteViewState extends State<NoteView> {
   List<NoteModel> fetchedNotes = [];
   List<NoteModel> displayedNotes = [];
   List<NoteModel> filteredNotes = [];
+  List<dynamic> preDefinedLoations = [];
   @override
   void initState() {
     super.initState();
     getNotes();
+    setpreDefinedLocation();
+
     // Provider.of<BottomNavBarProvider>(context, listen: false)
     //     .refreshNotifier
     //     .addListener(_refreshNotes);
@@ -75,6 +79,13 @@ class NoteViewState extends State<NoteView> {
         }
       });
       isLoading = false;
+    });
+  }
+
+  Future<void> setpreDefinedLocation() async {
+    List<dynamic> fetchedpreDefinedLocation = await getPredefinedLocations();
+    setState(() {
+      preDefinedLoations = fetchedpreDefinedLocation;
     });
   }
 
@@ -144,6 +155,17 @@ class NoteViewState extends State<NoteView> {
     }
   }
 
+  void handleLocationOperation(String locationOperation) {
+    if (locationOperation == 'addLocation') {
+      addNewLocation(context);
+      setpreDefinedLocation();
+    }
+
+    if (locationOperation == 'removeLocation') {
+      removeLocation(context, preDefinedLoations);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return isLoading
@@ -186,6 +208,24 @@ class NoteViewState extends State<NoteView> {
                             deleteSelectedNotes(context, notesKeys);
                           },
                         ),
+                      const SizedBox(width: 8),
+                      PopupMenuButton(
+                        icon: const Icon(Icons.more_vert),
+                        itemBuilder: (BuildContext context) => <PopupMenuEntry>[
+                          const PopupMenuItem(
+                            value: 'addLocation',
+                            child: Text('Add Location'),
+                          ),
+                          if (preDefinedLoations.isNotEmpty)
+                            const PopupMenuItem(
+                              value: 'removeLocation',
+                              child: Text('Delete Location'),
+                            )
+                        ],
+                        onSelected: (selectedOption) {
+                          handleLocationOperation(selectedOption);
+                        },
+                      ),
                     ],
                   )
                 ]
@@ -417,6 +457,133 @@ class NoteViewState extends State<NoteView> {
                   Navigator.of(context).pop();
                 });
               },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void addNewLocation(BuildContext context) {
+    final formKey = GlobalKey<FormState>();
+    TextEditingController locationController = TextEditingController();
+    TextEditingController coordinatesController = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Add Location'),
+          content: Form(
+            key: formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextFormField(
+                    controller: locationController,
+                    decoration:
+                        const InputDecoration(labelText: 'Location Name'),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter Location Name';
+                      } else if (preDefinedLoations.isNotEmpty &&
+                          preDefinedLoations.contains(value)) {
+                        return 'Location Name already exists';
+                      }
+                      return null;
+                    }),
+                const SizedBox(height: 10),
+                TextFormField(
+                    controller: coordinatesController,
+                    decoration: const InputDecoration(labelText: 'Coordinates'),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter coordinates';
+                      }
+                      return null;
+                    }),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              child: const Text('Add'),
+              onPressed: () {
+                // Perform the add operation here
+                if (formKey.currentState!.validate()) {
+                  String locationName = locationController.text;
+                  String coordinates = coordinatesController.text;
+
+                  addLocation(locationName, coordinates).then((value) {
+                    formKey.currentState!.reset();
+                    // Close the alert dialog
+                    Navigator.of(context).pop();
+                  });
+                }
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void removeLocation(BuildContext context, List<dynamic> locations) {
+    final formKey = GlobalKey<FormState>();
+    dynamic selectedLocation;
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Delete Location'),
+          content: Form(
+            key: formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                DropdownButtonFormField<String>(
+                  icon: const Icon(Icons.arrow_drop_down),
+                  menuMaxHeight: 150,
+                  value: selectedLocation,
+                  onChanged: (value) {
+                    setState(() {
+                      selectedLocation = value;
+                    });
+                  },
+                  items: locations.map((location) {
+                    return DropdownMenuItem<String>(
+                      value: location,
+                      child: Text(location),
+                    );
+                  }).toList(),
+                  decoration: const InputDecoration(
+                    labelText: 'Select Location',
+                    border: OutlineInputBorder(),
+                  ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please select a location';
+                    }
+                    return null;
+                  },
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                if (formKey.currentState!.validate() &&
+                    selectedLocation != null) {
+                  // Perform the delete operation here
+                  // Delete the selected location from the database
+                  deleteLocation(selectedLocation!).then((value) {
+                    setpreDefinedLocation();
+                    Navigator.of(context).pop();
+                  });
+                  // Close the alert dialog
+                }
+              },
+              child: const Text('Delete'),
             ),
           ],
         );
