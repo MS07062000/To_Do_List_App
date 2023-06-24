@@ -247,17 +247,25 @@ class _LocationNoteViewState extends State<LocationNoteView> {
                   ))
                 ] else ...[
                   Expanded(
+                    child: RefreshIndicator(
+                      onRefresh: () {
+                        return Future.delayed(const Duration(seconds: 1), () {
+                          didChangeDependencies();
+                        });
+                      },
                       child: ListView.builder(
-                    itemCount: displayedNotes.length,
-                    itemBuilder: (context, index) {
-                      NoteModel currentNote = displayedNotes[index];
-                      return Padding(
-                        padding: const EdgeInsets.only(
-                            left: 8.0, right: 8.0, top: 0, bottom: 0),
-                        child: buildNoteCard(context, index, currentNote),
-                      );
-                    },
-                  ))
+                        itemCount: displayedNotes.length,
+                        itemBuilder: (context, index) {
+                          NoteModel currentNote = displayedNotes[index];
+                          return Padding(
+                            padding: const EdgeInsets.only(
+                                left: 8.0, right: 8.0, top: 0, bottom: 0),
+                            child: buildNoteCard(context, index, currentNote),
+                          );
+                        },
+                      ),
+                    ),
+                  )
                 ]
                 // Expanded(
                 //   child: ValueListenableBuilder<List<NoteModel>>(

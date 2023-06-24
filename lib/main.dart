@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:to_do_list_app/LocationNotesScreen/get_current_location.dart';
+// import 'package:to_do_list_app/LocationNotesScreen/get_current_location.dart';
 import 'package:to_do_list_app/Main/home_page.dart';
 import 'package:to_do_list_app/Notifications/background_notification.dart';
 
 Future main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  BackgroundNotification();
   runApp(const MyApp());
 }
 
@@ -18,8 +20,6 @@ class _MyAppState extends State<MyApp> {
   @override
   void initState() {
     super.initState();
-    getCurrentLocation(context);
-    BackgroundNotification();
   }
 
   @override
