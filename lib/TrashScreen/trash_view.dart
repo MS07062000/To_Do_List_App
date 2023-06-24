@@ -107,6 +107,7 @@ class _TrashViewState extends State<TrashView> {
     setState(() {
       isLoading = true;
     });
+    notesKeys = [];
     getDeletedNotes();
     // Provider.of<BottomNavBarProvider>(context, listen: false)
     //     .refreshNotifier
@@ -143,26 +144,13 @@ class _TrashViewState extends State<TrashView> {
               actions: [
                 if (displayedNotes.isNotEmpty) ...[
                   //if (isNotesAvailable) ...[
-                  Row(
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.sort_by_alpha),
-                        onPressed: () {
-                          sortByNoteTitle(); //notesNotifier.value
-                        },
-                      ),
-                      const SizedBox(width: 8),
-                      if (notesKeys.isNotEmpty) ...[
-                        IconButton(
-                          icon: const Icon(Icons.delete),
-                          onPressed: () {
-                            deletePermanentlyTheDeletedNotes(
-                                context, notesKeys);
-                          },
-                        ),
-                      ],
-                    ],
-                  )
+                  IconButton(
+                    icon: const Icon(Icons.sort_by_alpha),
+                    onPressed: () {
+                      sortByNoteTitle(); //notesNotifier.value
+                    },
+                  ),
+                  const SizedBox(width: 8),
                 ]
               ],
             ),

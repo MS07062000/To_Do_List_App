@@ -41,7 +41,7 @@ Future<String> getCoordinates(String locationName) async {
   return predefinedLocationBox.get(locationName).toString();
 }
 
-Future<dynamic> getLocation(String coordinates) async {
+Future<String> getLocation(String coordinates) async {
   await initializeHive();
 
   final predefinedLocationBox =
@@ -55,7 +55,7 @@ Future<dynamic> getLocation(String coordinates) async {
       0);
 
   if (locationList.isNotEmpty) {
-    return locationList.first;
+    return locationList.first.toString();
   }
-  return null;
+  return '';
 }

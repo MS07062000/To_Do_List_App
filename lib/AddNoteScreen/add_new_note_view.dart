@@ -78,18 +78,22 @@ class _AddNewNoteViewState extends State<AddNewNoteView> {
   }
 
   void _setSelectedLocation(String? coordinates) async {
-    dynamic locationName = await getLocation(coordinates!);
-    if (locationName != null) {
-      setState(() {
-        _selectedLocation = locationName;
-        _destinationController.text = '';
-        _destinationType = 'predefinedLocation';
-      });
+    if (coordinates != null) {
+      var locationName = await getLocation(coordinates);
+      if (locationName.isNotEmpty) {
+        setState(() {
+          _selectedLocation = locationName;
+          _destinationController.text = '';
+          _destinationType = 'predefinedLocation';
+        });
+      }
     } else {
-      setState(() {
-        _selectedLocation = predefinedLocations[0];
-        _destinationType = 'map';
-      });
+      if (predefinedLocations.isNotEmpty) {
+        setState(() {
+          _selectedLocation = predefinedLocations[0];
+          _destinationType = 'map';
+        });
+      }
     }
   }
 
@@ -117,9 +121,11 @@ class _AddNewNoteViewState extends State<AddNewNoteView> {
     });
   }
 
-  void _onPredefinedLocation(location) {
+  void _onPredefinedLocation(location) async {
+    String locationCoordinates = await getCoordinates(location);
     setState(() {
       _selectedLocation = location;
+      _destinationController.text = locationCoordinates;
     });
   }
 

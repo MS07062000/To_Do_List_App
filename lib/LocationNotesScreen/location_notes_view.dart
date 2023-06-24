@@ -79,7 +79,7 @@ class _LocationNoteViewState extends State<LocationNoteView> {
     //     await findNotesFromDestination(currentLocation, 500.00, false));
     // selectedItems = List.filled(notesNotifier.value.length, false);
     List<NoteModel> notes =
-        await findNotesFromDestination(currentLocation, 500.00, false);
+        await findNotesFromDestination(currentLocation, 300.00, false);
     if (mounted) {
       setState(() {
         fetchedNotes = notes;
@@ -412,6 +412,7 @@ class _LocationNoteViewState extends State<LocationNoteView> {
                   // Provider.of<BottomNavBarProvider>(context, listen: false)
                   //     .refreshNotifier
                   //     .value = true;
+                  notesKeys = [];
                   didChangeDependencies();
                   Navigator.of(context).pop();
                 });

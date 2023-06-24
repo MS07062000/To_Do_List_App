@@ -1,3 +1,6 @@
+import 'dart:developer';
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -25,7 +28,8 @@ class LocationNotificationHelper {
   String notificationChannelName = 'Location Notifications';
   String notificationChannelDescription =
       'Notifications for location-based notes';
-  void initializeApp() {
+
+  LocationNotificationHelper() {
     initializeNotifications();
     startLocationMonitoring();
   }
@@ -52,16 +56,14 @@ class LocationNotificationHelper {
       if (details.actionId!.compareTo('completed') == 0) {
         setDeleteOfAllSelectedNote([details.id]);
       }
-
       await flutterLocalNotificationsPlugin.cancel(details.id ?? -1);
     }
   }
 
   void startLocationMonitoring() {
-    print("Inside notification");
+    log("Inside notification");
     LocationSettings locationSettings = const LocationSettings(
         accuracy: LocationAccuracy.bestForNavigation,
-        distanceFilter: 10,
         timeLimit: Duration(minutes: 1));
     Geolocator.getPositionStream(locationSettings: locationSettings).listen(
         (Position position) {
@@ -73,7 +75,7 @@ class LocationNotificationHelper {
 
   void checkLocationZoneAndNotifyNotes(Position currentPosition) async {
     List<NoteModel> notes =
-        await findNotesFromDestination(currentPosition, 100, true);
+        await findNotesFromDestination(currentPosition, 300.00, true);
     for (NoteModel note in notes) {
       showNotification(note);
       setNotified(note.key);
@@ -99,7 +101,10 @@ class LocationNotificationHelper {
             importance: Importance.high,
             priority: Priority.high,
             groupKey: DateTime.now().millisecondsSinceEpoch.toString(),
-            actions: androidActions);
+            actions: androidActions,
+            vibrationPattern: Int64List.fromList(<int>[0, 5000]),
+            styleInformation: BigTextStyleInformation(notificationBody(note)!,
+                contentTitle: note.notetitle));
 
     NotificationDetails platformChannelSpecifics =
         NotificationDetails(android: androidPlatformChannelSpecifics);

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:provider/provider.dart';
+import 'package:to_do_list_app/Main/bottom_navbar_provider.dart';
 // import 'package:provider/provider.dart';
 // import 'package:to_do_list_app/Main/bottom_navbar_provider.dart';
 
@@ -72,6 +74,9 @@ void showPopUp(context) async {
             // Open device settings
             Geolocator.openAppSettings();
             Navigator.of(context).pop();
+            Provider.of<BottomNavBarProvider>(context, listen: false)
+                .currentIndex
+                .value = 0;
           },
         ),
       ],

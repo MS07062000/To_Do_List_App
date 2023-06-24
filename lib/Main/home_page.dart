@@ -5,7 +5,6 @@ import 'package:to_do_list_app/AddNoteScreen/add_new_note_view.dart';
 import 'package:to_do_list_app/HomeScreen/home_view.dart';
 import 'package:to_do_list_app/LocationNotesScreen/location_view.dart';
 import 'package:to_do_list_app/Main/bottom_navbar_provider.dart';
-import 'package:to_do_list_app/Notifications/notes_notification.dart';
 import 'package:to_do_list_app/TrashScreen/trash_view.dart';
 
 class MyHomePage extends StatefulWidget {
@@ -16,8 +15,6 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  late LocationNotificationHelper notificationHelper =
-      LocationNotificationHelper();
   final List<Widget> _screens = [
     const HomeView(),
     const LocationView(),
@@ -28,7 +25,6 @@ class _MyHomePageState extends State<MyHomePage> {
   void initState() {
     super.initState();
     // insertFakeData();
-    notificationHelper.initializeApp();
   }
 
   @override

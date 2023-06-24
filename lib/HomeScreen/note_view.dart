@@ -453,6 +453,7 @@ class NoteViewState extends State<NoteView> {
                   // Provider.of<BottomNavBarProvider>(context, listen: false)
                   //     .refreshNotifier
                   //     .value = true;
+                  notesKeys = [];
                   getNotes();
                   Navigator.of(context).pop();
                 });

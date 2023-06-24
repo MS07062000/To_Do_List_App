@@ -1,3 +1,4 @@
+import 'dart:developer';
 import 'package:geolocator/geolocator.dart';
 import 'package:hive_flutter/adapters.dart';
 import 'package:path_provider/path_provider.dart' as path_provider;
@@ -179,6 +180,8 @@ Future<List<NoteModel>> findNotesFromDestination(Position currentLocation,
 
   // Filter the notes based on the distance from the current location
   List<NoteModel> filteredNotes = noteBox.values.where((note) {
+    // print(note.key);
+    // print(note.destination);
     double noteLatitude = double.parse(note.destination.split(',')[0]);
     double noteLongitude =
         double.parse(note.destination.split(',')[1]); //note.destination;
@@ -193,6 +196,7 @@ Future<List<NoteModel>> findNotesFromDestination(Position currentLocation,
 
     // Filter the notes within the maximum distance
     if (isUsedForNotification) {
+      log("notification data");
       return distanceInMeters <= maxDistance &&
           !note.isDelete &&
           !note.isNotified;
