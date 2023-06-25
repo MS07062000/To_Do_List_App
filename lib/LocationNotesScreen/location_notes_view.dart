@@ -21,7 +21,17 @@ class _LocationNoteViewState extends State<LocationNoteView> {
   bool isNotesAvailable = false;
   List<bool> selectedItems = [];
   List<dynamic> notesKeys = [];
-  final currentLocationValue = ValueNotifier<Position?>(null);
+  Position currentLocationValue = Position(
+    latitude: -180.0,
+    longitude: -180.0,
+    accuracy: 0.0,
+    altitude: 0.0,
+    heading: 0.0,
+    speed: 0.0,
+    speedAccuracy: 0.0,
+    timestamp: DateTime.now(),
+  );
+
   // ValueNotifier<List<NoteModel>> notesNotifier =
   //     ValueNotifier<List<NoteModel>>([]);
   List<NoteModel> fetchedNotes = [];
@@ -91,13 +101,13 @@ class _LocationNoteViewState extends State<LocationNoteView> {
 
   void startLocationMonitoring() {
     const locationSettings = LocationSettings(
-        accuracy: LocationAccuracy.best, timeLimit: Duration(seconds: 30));
+        accuracy: LocationAccuracy.best, timeLimit: Duration(minutes: 1));
     _positionStreamSubscription =
-        Geolocator.getPositionStream(locationSettings: locationSettings)
-            .listen((Position position) {
-      currentLocationValue.value = position;
-      getNotes(currentLocationValue.value);
-    });
+        Geolocator.getPositionStream(locationSettings: locationSettings).listen(
+            (Position position) {
+      currentLocationValue = position;
+      getNotes(currentLocationValue);
+    }, onError: (error) => {startLocationMonitoring()});
   }
 
   void sortByNoteTitle() {
@@ -125,8 +135,8 @@ class _LocationNoteViewState extends State<LocationNoteView> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     getCurrentLocation(context).then((location) {
-      currentLocationValue.value = location;
-      getNotes(currentLocationValue.value);
+      currentLocationValue = location;
+      getNotes(currentLocationValue);
     });
   }
 
@@ -157,13 +167,15 @@ class _LocationNoteViewState extends State<LocationNoteView> {
           ],
         )
       ]),
-      body: ValueListenableBuilder<Position?>(
-        valueListenable: currentLocationValue,
-        builder: (context, value, child) {
-          if (value == null) {
-            return const Center(child: CircularProgressIndicator());
-          } else if (value.latitude == 0.0 && value.longitude == 0.0) {
-            return AlertDialog(
+      body: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (currentLocationValue.latitude == -180.0 &&
+              currentLocationValue.longitude == -180.0) ...[
+            const Center(child: CircularProgressIndicator())
+          ] else if (currentLocationValue.latitude == 0.0 &&
+              currentLocationValue.longitude == 0.0) ...[
+            AlertDialog(
               title: const Text('Location Services Or Permissions Disabled'),
               content: const Text(
                   'Please enable both location services and permissions to use this feature.'),
@@ -177,153 +189,112 @@ class _LocationNoteViewState extends State<LocationNoteView> {
                   },
                 ),
               ],
-            );
-          } else {
-            return Column(
-              children: [
-                if (fetchedNotes.isNotEmpty) ...[
-                  //notesNotifier.value
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Padding(
-                          padding:
-                              const EdgeInsets.fromLTRB(10.0, 5.0, 10.0, 5.0),
-                          child: TextField(
-                            controller: searchController,
-                            onChanged: (value) {
-                              setState(() {
-                                filteredNotes =
-                                    displayedNotes //notesNotifier.value
-                                        .where((note) => note.notetitle
-                                            .toLowerCase()
-                                            .contains(value.toLowerCase()))
-                                        .toList();
-                              });
-                            },
-                            decoration: const InputDecoration(
-                              labelText: 'Search Notes',
-                              border: OutlineInputBorder(),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  if (selectedItems.contains(true))
+            )
+          ] else ...[
+            Flexible(
+              // Replace Expanded with Flexible
+              fit: FlexFit.loose, // Set fit to FlexFit.loose
+              child: Column(
+                children: [
+                  if (fetchedNotes.isNotEmpty) ...[
+                    //notesNotifier.value
                     Row(
                       children: [
                         Expanded(
                           child: Padding(
                             padding:
                                 const EdgeInsets.fromLTRB(10.0, 5.0, 10.0, 5.0),
-                            child: CheckboxListTile(
-                              controlAffinity: ListTileControlAffinity.leading,
-                              title: const Text('Select All'),
-                              value: selectedItems
-                                  .every((isSelected) => isSelected),
+                            child: TextField(
+                              controller: searchController,
                               onChanged: (value) {
-                                handleSelectAllChange(value);
+                                setState(() {
+                                  filteredNotes =
+                                      displayedNotes //notesNotifier.value
+                                          .where((note) => note.notetitle
+                                              .toLowerCase()
+                                              .contains(value.toLowerCase()))
+                                          .toList();
+                                });
                               },
+                              decoration: const InputDecoration(
+                                labelText: 'Search Notes',
+                                border: OutlineInputBorder(),
+                              ),
                             ),
                           ),
                         ),
                       ],
                     ),
-                ],
-
-                if (searchController.text.isNotEmpty &&
-                    filteredNotes.isEmpty) ...[
-                  const Expanded(
-                      child: Center(
-                    child: Text(
-                      'No notes found as per the input entered by you.',
-                    ),
-                  ))
-                ] else if (displayedNotes.isEmpty) ...[
-                  const Expanded(
-                      child: Center(
-                    child: Text("No Notes"),
-                  ))
-                ] else ...[
-                  Expanded(
-                    child: RefreshIndicator(
-                      onRefresh: () {
-                        return Future.delayed(const Duration(seconds: 1), () {
-                          didChangeDependencies();
-                        });
-                      },
-                      child: ListView.builder(
-                        itemCount: displayedNotes.length,
-                        itemBuilder: (context, index) {
-                          NoteModel currentNote = displayedNotes[index];
-                          return Padding(
-                            padding: const EdgeInsets.only(
-                                left: 8.0, right: 8.0, top: 0, bottom: 0),
-                            child: buildNoteCard(context, index, currentNote),
-                          );
-                        },
+                    if (selectedItems.contains(true))
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Padding(
+                              padding: const EdgeInsets.fromLTRB(
+                                  10.0, 5.0, 10.0, 5.0),
+                              child: CheckboxListTile(
+                                controlAffinity:
+                                    ListTileControlAffinity.leading,
+                                title: const Text('Select All'),
+                                value: selectedItems
+                                    .every((isSelected) => isSelected),
+                                onChanged: (value) {
+                                  handleSelectAllChange(value);
+                                },
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                  )
-                ]
-                // Expanded(
-                //   child: ValueListenableBuilder<List<NoteModel>>(
-                //     valueListenable: notesNotifier,
-                //     builder: (context, list, _) {
-                //       List<NoteModel> displayedNotes =
-                //           searchController.text.isEmpty ? list : filteredNotes;
-
-                //       if (isNotesAvailable &&
-                //           searchController.text.isEmpty &&
-                //           displayedNotes.isEmpty) {
-                //         // Provider.of<BottomNavBarProvider>(context, listen: false)
-                //         //     .isNotesAvailable
-                //         //     .value = false;
-                //         return const Center(
-                //           child: Text("No Notes Available for this Location"),
-                //         );
-                //       }
-
-                //       if (isNotesAvailable &&
-                //           searchController.text.isNotEmpty &&
-                //           displayedNotes.isEmpty) {
-                //         // Provider.of<BottomNavBarProvider>(context, listen: false)
-                //         //     .isNotesAvailable
-                //         //     .value = false;
-                //         return const Center(
-                //           child: Text(
-                //             'No notes found as per the input entered by you.',
-                //           ),
-                //         );
-                //       }
-
-                //       // Provider.of<BottomNavBarProvider>(context, listen: false)
-                //       //     .isNotesAvailable
-                //       //     .value = true;
-                //       return ListView.builder(
-                //         itemCount: displayedNotes.length,
-                //         itemBuilder: (context, index) {
-                //           NoteModel currentNote = displayedNotes[index];
-                //           return Padding(
-                //               padding: const EdgeInsets.only(
-                //                   left: 8.0, right: 8.0, top: 0, bottom: 0),
-                //               child:
-                //                   buildNoteCard(context, index, currentNote));
-                //         },
-                //       );
-                //     },
-                //   ),
-                // ),
-              ],
-            );
-          }
-        },
+                  ],
+                  if (searchController.text.isNotEmpty &&
+                      filteredNotes.isEmpty) ...[
+                    const Expanded(
+                        child: Center(
+                      child: Text(
+                        'No notes found as per the input entered by you.',
+                      ),
+                    ))
+                  ] else if (displayedNotes.isEmpty) ...[
+                    const Expanded(
+                        child: Center(
+                      child: Text("No Notes"),
+                    ))
+                  ] else ...[
+                    Expanded(
+                      child: RefreshIndicator(
+                        onRefresh: () {
+                          return Future.delayed(const Duration(seconds: 1), () {
+                            // didChangeDependencies();
+                            getNotes(currentLocationValue);
+                          });
+                        },
+                        child: ListView.builder(
+                          itemCount: displayedNotes.length,
+                          itemBuilder: (context, index) {
+                            NoteModel currentNote = displayedNotes[index];
+                            return Padding(
+                              padding: const EdgeInsets.only(
+                                  left: 8.0, right: 8.0, top: 0, bottom: 0),
+                              child: buildNoteCard(context,
+                                  currentLocationValue, index, currentNote),
+                            );
+                          },
+                        ),
+                      ),
+                    )
+                  ]
+                ],
+              ),
+            ),
+          ],
+        ],
       ),
     );
   }
 
-  Widget buildNoteCard(BuildContext context, int noteIndex, NoteModel note) {
+  Widget buildNoteCard(BuildContext context, Position currentLocation,
+      int noteIndex, NoteModel note) {
     return GestureDetector(
         onLongPress: () {
           setState(() {
@@ -349,7 +320,7 @@ class _LocationNoteViewState extends State<LocationNoteView> {
             trailing: IconButton(
               icon: const Icon(Icons.edit),
               onPressed: () {
-                navigateToNoteEdit(context, note);
+                navigateToNoteEdit(context, note, currentLocation);
               },
             ),
             onTap: () {
@@ -378,7 +349,8 @@ class _LocationNoteViewState extends State<LocationNoteView> {
     });
   }
 
-  void navigateToNoteEdit(BuildContext context, NoteModel note) {
+  void navigateToNoteEdit(
+      BuildContext context, NoteModel note, Position currentLocation) {
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -386,7 +358,7 @@ class _LocationNoteViewState extends State<LocationNoteView> {
         builder: (context) => EditNoteView(noteKey: note.key, note: note),
       ),
     ).then((value) {
-      didChangeDependencies();
+      getNotes(currentLocation);
     });
   }
 
@@ -422,6 +394,7 @@ class _LocationNoteViewState extends State<LocationNoteView> {
                   //     .value = true;
                   notesKeys = [];
                   didChangeDependencies();
+
                   Navigator.of(context).pop();
                 });
               },
@@ -433,31 +406,186 @@ class _LocationNoteViewState extends State<LocationNoteView> {
   }
 }
 
+// body: ValueListenableBuilder<Position?>(
+//         valueListenable: currentLocationValue,
+//         builder: (context, currentLocationValue, child) {
+//           if (currentLocationValue == null) {
+//             return const Center(child: CircularProgressIndicator());
+//           } else if (currentLocationValue.latitude == 0.0 &&
+//               currentLocationValue.longitude == 0.0) {
+//             return AlertDialog(
+//               title: const Text('Location Services Or Permissions Disabled'),
+//               content: const Text(
+//                   'Please enable both location services and permissions to use this feature.'),
+//               actions: [
+//                 TextButton(
+//                   child: const Text('Open Settings'),
+//                   onPressed: () {
+//                     // Open device settings
+//                     Geolocator.openAppSettings();
+//                     Navigator.of(context).pop();
+//                   },
+//                 ),
+//               ],
+//             );
+//           } else {
+//             return Column(
+//               children: [
+//                 if (fetchedNotes.isNotEmpty) ...[
+//                   //notesNotifier.value
+//                   Row(
+//                     children: [
+//                       Expanded(
+//                         child: Padding(
+//                           padding:
+//                               const EdgeInsets.fromLTRB(10.0, 5.0, 10.0, 5.0),
+//                           child: TextField(
+//                             controller: searchController,
+//                             onChanged: (value) {
+//                               setState(() {
+//                                 filteredNotes =
+//                                     displayedNotes //notesNotifier.value
+//                                         .where((note) => note.notetitle
+//                                             .toLowerCase()
+//                                             .contains(value.toLowerCase()))
+//                                         .toList();
+//                               });
+//                             },
+//                             decoration: const InputDecoration(
+//                               labelText: 'Search Notes',
+//                               border: OutlineInputBorder(),
+//                             ),
+//                           ),
+//                         ),
+//                       ),
+//                     ],
+//                   ),
+//                   if (selectedItems.contains(true))
+//                     Row(
+//                       children: [
+//                         Expanded(
+//                           child: Padding(
+//                             padding:
+//                                 const EdgeInsets.fromLTRB(10.0, 5.0, 10.0, 5.0),
+//                             child: CheckboxListTile(
+//                               controlAffinity: ListTileControlAffinity.leading,
+//                               title: const Text('Select All'),
+//                               value: selectedItems
+//                                   .every((isSelected) => isSelected),
+//                               onChanged: (value) {
+//                                 handleSelectAllChange(value);
+//                               },
+//                             ),
+//                           ),
+//                         ),
+//                       ],
+//                     ),
+//                 ],
 
+//                 if (searchController.text.isNotEmpty &&
+//                     filteredNotes.isEmpty) ...[
+//                   const Expanded(
+//                       child: Center(
+//                     child: Text(
+//                       'No notes found as per the input entered by you.',
+//                     ),
+//                   ))
+//                 ] else if (displayedNotes.isEmpty) ...[
+//                   const Expanded(
+//                       child: Center(
+//                     child: Text("No Notes"),
+//                   ))
+//                 ] else ...[
+//                   Expanded(
+//                     child: RefreshIndicator(
+//                       onRefresh: () {
+//                         return Future.delayed(const Duration(seconds: 1), () {
+//                           // didChangeDependencies();
+//                           getNotes(currentLocationValue);
+//                         });
+//                       },
+//                       child: ListView.builder(
+//                         itemCount: displayedNotes.length,
+//                         itemBuilder: (context, index) {
+//                           NoteModel currentNote = displayedNotes[index];
+//                           return Padding(
+//                             padding: const EdgeInsets.only(
+//                                 left: 8.0, right: 8.0, top: 0, bottom: 0),
+//                             child: buildNoteCard(context, currentLocationValue,
+//                                 index, currentNote),
+//                           );
+//                         },
+//                       ),
+//                     ),
+//                   )
+//                 ]
+//                 // Expanded(
+//                 //   child: ValueListenableBuilder<List<NoteModel>>(
+//                 //     valueListenable: notesNotifier,
+//                 //     builder: (context, list, _) {
+//                 //       List<NoteModel> displayedNotes =
+//                 //           searchController.text.isEmpty ? list : filteredNotes;
 
+//                 //       if (isNotesAvailable &&
+//                 //           searchController.text.isEmpty &&
+//                 //           displayedNotes.isEmpty) {
+//                 //         // Provider.of<BottomNavBarProvider>(context, listen: false)
+//                 //         //     .isNotesAvailable
+//                 //         //     .value = false;
+//                 //         return const Center(
+//                 //           child: Text("No Notes Available for this Location"),
+//                 //         );
+//                 //       }
 
- //   if (notesNotifier.value.isNotEmpty) ...[
-              //     CheckboxListTile(
-              //       controlAffinity: ListTileControlAffinity.leading,
-              //       title: const Text('Select All'),
-              //       value: selectedItems.every((isSelected) => isSelected),
-              //       onChanged: (value) {
-              //         setState(() {
-              //           selectedItems = List.filled(
-              //               notesNotifier.value.length, value ?? false);
-              //         });
-              //       },
-              //     ),
-              //   ],
+//                 //       if (isNotesAvailable &&
+//                 //           searchController.text.isNotEmpty &&
+//                 //           displayedNotes.isEmpty) {
+//                 //         // Provider.of<BottomNavBarProvider>(context, listen: false)
+//                 //         //     .isNotesAvailable
+//                 //         //     .value = false;
+//                 //         return const Center(
+//                 //           child: Text(
+//                 //             'No notes found as per the input entered by you.',
+//                 //           ),
+//                 //         );
+//                 //       }
 
+//                 //       // Provider.of<BottomNavBarProvider>(context, listen: false)
+//                 //       //     .isNotesAvailable
+//                 //       //     .value = true;
+//                 //       return ListView.builder(
+//                 //         itemCount: displayedNotes.length,
+//                 //         itemBuilder: (context, index) {
+//                 //           NoteModel currentNote = displayedNotes[index];
+//                 //           return Padding(
+//                 //               padding: const EdgeInsets.only(
+//                 //                   left: 8.0, right: 8.0, top: 0, bottom: 0),
+//                 //               child:
+//                 //                   buildNoteCard(context, index, currentNote));
+//                 //         },
+//                 //       );
+//                 //     },
+//                 //   ),
+//                 // ),
+//               ],
+//             );
+//           }
+//         },
+//       ),
 
-
-
-
-
-
-
-
+//   if (notesNotifier.value.isNotEmpty) ...[
+//     CheckboxListTile(
+//       controlAffinity: ListTileControlAffinity.leading,
+//       title: const Text('Select All'),
+//       value: selectedItems.every((isSelected) => isSelected),
+//       onChanged: (value) {
+//         setState(() {
+//           selectedItems = List.filled(
+//               notesNotifier.value.length, value ?? false);
+//         });
+//       },
+//     ),
+//   ],
 
 // void deleteNote(BuildContext context, NoteModel note) {
 //   showDialog(
@@ -485,5 +613,3 @@ class _LocationNoteViewState extends State<LocationNoteView> {
 //     },
 //   );
 // }
-
-

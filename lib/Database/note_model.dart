@@ -180,8 +180,12 @@ Future<List<NoteModel>> findNotesFromDestination(Position currentLocation,
 
   // Filter the notes based on the distance from the current location
   List<NoteModel> filteredNotes = noteBox.values.where((note) {
-    // print(note.key);
-    // print(note.destination);
+    // log(note.key.toString());
+    // log(note.destination);
+    if (isUsedForNotification) {
+      log("${note.notetitle} ${note.isDelete}");
+    }
+
     double noteLatitude = double.parse(note.destination.split(',')[0]);
     double noteLongitude =
         double.parse(note.destination.split(',')[1]); //note.destination;
@@ -196,7 +200,6 @@ Future<List<NoteModel>> findNotesFromDestination(Position currentLocation,
 
     // Filter the notes within the maximum distance
     if (isUsedForNotification) {
-      log("notification data");
       return distanceInMeters <= maxDistance &&
           !note.isDelete &&
           !note.isNotified;

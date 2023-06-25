@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:developer';
 import 'dart:typed_data';
 
@@ -14,7 +15,9 @@ void onDidReceiveBackgroundNotificationResponse(
   if (details.payload == 'location_zone') {
     setNotified(details.id);
     if (details.actionId!.compareTo('completed') == 0) {
-      setDeleteOfAllSelectedNote([details.id]);
+      log("completed");
+      log(details.id.toString());
+      await setDeleteOfAllSelectedNote([details.id]);
     }
     await FlutterLocalNotificationsPlugin().cancel(details.id ?? -1);
   }
@@ -28,10 +31,11 @@ class LocationNotificationHelper {
   String notificationChannelName = 'Location Notifications';
   String notificationChannelDescription =
       'Notifications for location-based notes';
-
+  StreamSubscription<Position>? positionStreamSubscription;
   LocationNotificationHelper() {
     initializeNotifications();
     startLocationMonitoring();
+    // stopLocationMonitoring();
   }
 
   void initializeNotifications() async {
@@ -61,12 +65,13 @@ class LocationNotificationHelper {
   }
 
   void startLocationMonitoring() {
-    log("Inside notification");
-    LocationSettings locationSettings = const LocationSettings(
-        accuracy: LocationAccuracy.bestForNavigation,
-        timeLimit: Duration(minutes: 1));
-    Geolocator.getPositionStream(locationSettings: locationSettings).listen(
-        (Position position) {
+    // print("Inside notification");
+    LocationSettings locationSettings =
+        const LocationSettings(accuracy: LocationAccuracy.best);
+    positionStreamSubscription =
+        Geolocator.getPositionStream(locationSettings: locationSettings).listen(
+            (Position position) async {
+      // print('${position.latitude},${position.longitude}');
       checkLocationZoneAndNotifyNotes(position);
     }, onError: (dynamic error) {
       startLocationMonitoring();
@@ -77,6 +82,7 @@ class LocationNotificationHelper {
     List<NoteModel> notes =
         await findNotesFromDestination(currentPosition, 300.00, true);
     for (NoteModel note in notes) {
+      // print('${note.notetitle}');
       showNotification(note);
       setNotified(note.key);
       vibrateDevice();

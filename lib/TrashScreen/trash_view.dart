@@ -108,7 +108,7 @@ class _TrashViewState extends State<TrashView> {
       isLoading = true;
     });
     notesKeys = [];
-    getDeletedNotes();
+    getDeletedData();
     // Provider.of<BottomNavBarProvider>(context, listen: false)
     //     .refreshNotifier
     //     .value = true;
@@ -120,7 +120,7 @@ class _TrashViewState extends State<TrashView> {
       setState(() {
         isLoading = true;
       });
-      getDeletedNotes();
+      getDeletedData();
 
       // Provider.of<BottomNavBarProvider>(context, listen: false)
       //     .refreshNotifier

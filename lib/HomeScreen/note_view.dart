@@ -200,7 +200,7 @@ class NoteViewState extends State<NoteView> {
                           sortHandler(selectedOption);
                         },
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: 4),
                       if (notesKeys.isNotEmpty)
                         IconButton(
                           icon: const Icon(Icons.delete),
@@ -208,7 +208,7 @@ class NoteViewState extends State<NoteView> {
                             deleteSelectedNotes(context, notesKeys);
                           },
                         ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: 4),
                       PopupMenuButton(
                         icon: const Icon(Icons.more_vert),
                         itemBuilder: (BuildContext context) => <PopupMenuEntry>[
