@@ -6,8 +6,6 @@ import 'package:to_do_list_app/Main/bottom_navbar_provider.dart';
 import 'package:to_do_list_app/Database/note_model.dart';
 import 'package:provider/provider.dart';
 import 'package:to_do_list_app/Map/osm_map_view.dart';
-// import 'package:latlong2/latlong.dart';
-// import 'package:to_do_list_app/Map/unknown_map_view.dart';
 
 class AddNewNoteView extends StatefulWidget {
   final NoteModel? note;
@@ -30,6 +28,7 @@ class _AddNewNoteViewState extends State<AddNewNoteView> {
   String _noteType = 'Text';
   final List<String> _checklistItems = [];
   final ScrollController _scrollController = ScrollController();
+
   @override
   void initState() {
     super.initState();
@@ -113,7 +112,7 @@ class _AddNewNoteViewState extends State<AddNewNoteView> {
   void _onDestinationTap() async {
     GeoPoint latLng = await Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (context) => const OSMMapView(), //UnknownMapView(),
+        builder: (context) => const OSMMapView(),
       ),
     );
     setState(() {
