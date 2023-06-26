@@ -18,7 +18,6 @@ class NoteView extends StatefulWidget {
 class NoteViewState extends State<NoteView> {
   bool isLoading = true;
   bool isLocationServicesAvailable = false;
-  // late ValueNotifier<List<NoteModel>> notesNotifier;
   List<bool> selectedItems = [];
   List<dynamic> notesKeys = [];
   TextEditingController searchController = TextEditingController();
@@ -26,46 +25,20 @@ class NoteViewState extends State<NoteView> {
   List<NoteModel> displayedNotes = [];
   List<NoteModel> filteredNotes = [];
   List<dynamic> preDefinedLoations = [];
+
   @override
   void initState() {
     super.initState();
     getNotes();
     setpreDefinedLocation();
-
-    // Provider.of<BottomNavBarProvider>(context, listen: false)
-    //     .refreshNotifier
-    //     .addListener(_refreshNotes);
   }
 
   @override
   void dispose() {
-    // Provider.of<BottomNavBarProvider>(context, listen: false)
-    //     .refreshNotifier
-    //     .addListener(_refreshNotes);
     super.dispose();
   }
 
-  // void _refreshNotes() {
-  //   if (!Provider.of<BottomNavBarProvider>(context, listen: false)
-  //       .refreshNotifier
-  //       .value) {
-  //     return;
-  //   }
-  //   if (mounted) {
-  //     setState(() {
-  //       isLoading = true;
-  //     });
-  //     getNotes();
-  //   }
-  //   Provider.of<BottomNavBarProvider>(context, listen: false)
-  //       .refreshNotifier
-  //       .value = false;
-  // }
-
   Future<void> getNotes() async {
-    // notesNotifier = ValueNotifier<List<NoteModel>>(await getUnreadNotes());
-    //  selectedItems = List.filled(notesNotifier.value.length, false);
-
     List<NoteModel> notes = await getUnreadNotes();
     setState(() {
       fetchedNotes = notes;
@@ -102,14 +75,11 @@ class NoteViewState extends State<NoteView> {
   void handleSelectAllChange(bool selectAll) {
     setState(() {
       selectedItems = List.filled(displayedNotes.length, selectAll);
-      // List.filled(notesNotifier.value.length, selectAll ?? false);
       if (selectAll) {
         notesKeys = displayedNotes.map((note) => note.key).toList();
       } else {
         notesKeys = [];
       }
-      // Provider.of<BottomNavBarProvider>(context, listen: false)
-      //     .setNotesKeys(notesKeys);
     });
   }
 
@@ -204,7 +174,6 @@ class NoteViewState extends State<NoteView> {
             body: Column(
               children: [
                 if (fetchedNotes.isNotEmpty) ...[
-                  //notesNotifier.value
                   Row(
                     children: [
                       Expanded(
@@ -261,23 +230,7 @@ class NoteViewState extends State<NoteView> {
                       child: Center(
                     child: Text("No Notes"),
                   ))
-                ]
-                // ] else if (searchController.text.isNotEmpty &&
-                //     filteredNotes.isNotEmpty) ...[
-                //   Expanded(
-                //       child: ListView.builder(
-                //     itemCount: filteredNotes.length,
-                //     itemBuilder: (context, index) {
-                //       NoteModel currentNote = filteredNotes[index];
-                //       return Padding(
-                //         padding: const EdgeInsets.only(
-                //             left: 8.0, right: 8.0, top: 0, bottom: 0),
-                //         child: buildNoteCard(context, index, currentNote),
-                //       );
-                //     },
-                //   ))
-                // ]
-                else ...[
+                ] else ...[
                   Expanded(
                       child: ListView.builder(
                     itemCount: displayedNotes.length,
@@ -291,32 +244,6 @@ class NoteViewState extends State<NoteView> {
                     },
                   ))
                 ]
-
-                // Expanded(
-                //   child: ValueListenableBuilder<List<NoteModel>>(
-                //     valueListenable: notesNotifier,
-                //     builder: (context, notes, _) {
-                //       displayedNotes = searchController.text.isEmpty
-                //           ? notes
-                //           : displayedNotes;
-
-                //       if (notes.isEmpty)
-                //         return const Center(
-                //           child: Text("No Notes"),
-                //         );
-                //       }
-
-                //       if (displayedNotes.isEmpty) {
-                //         return const Center(
-                //           child: Text(
-                //             'No notes found as per the input entered by you.',
-                //           ),
-                //         );
-                //       }
-
-                //     },
-                //   ),
-                // ),
               ],
             ));
   }
@@ -371,9 +298,6 @@ class NoteViewState extends State<NoteView> {
           notesKeys.remove(note.key);
         }
       }
-      // print(notesKeys);
-      // Provider.of<BottomNavBarProvider>(context, listen: false)
-      //     .setNotesKeys(notesKeys);
     });
   }
 
@@ -420,9 +344,6 @@ class NoteViewState extends State<NoteView> {
               child: const Text("Yes"),
               onPressed: () {
                 setDeleteOfAllSelectedNote(noteKeys).then((value) {
-                  // Provider.of<BottomNavBarProvider>(context, listen: false)
-                  //     .refreshNotifier
-                  //     .value = true;
                   notesKeys = [];
                   Navigator.of(context).pop();
                   getNotes();

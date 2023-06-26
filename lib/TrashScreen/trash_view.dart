@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:to_do_list_app/Database/note_model.dart';
 import 'package:to_do_list_app/Helper/helper.dart';
 import 'package:to_do_list_app/HomeScreen/note_content_page.dart';
-// import 'package:provider/provider.dart';
-// import 'package:to_do_list_app/Main/bottom_navbar_provider.dart';
 
 class TrashView extends StatefulWidget {
   const TrashView({super.key});
@@ -13,53 +11,26 @@ class TrashView extends StatefulWidget {
 
 class _TrashViewState extends State<TrashView> {
   bool isLoading = true;
-  // bool isNotesAvailable = false;
-  // late ValueNotifier<List<NoteModel>> notesNotifier;
   List<bool> selectedItems = [];
   List<dynamic> notesKeys = [];
   TextEditingController searchController = TextEditingController();
   List<NoteModel> displayedNotes = [];
   List<NoteModel> fetchedNotes = [];
   List<NoteModel> filteredNotes = [];
+
   @override
   void initState() {
     super.initState();
     getDeletedData();
-    // Provider.of<BottomNavBarProvider>(context, listen: false)
-    //     .refreshNotifier
-    //     .addListener(_refreshNotes);
   }
 
   @override
   void dispose() {
-    // Provider.of<BottomNavBarProvider>(context, listen: false)
-    //     .refreshNotifier
-    //     .addListener(_refreshNotes);
     searchController.dispose();
     super.dispose();
   }
 
-  // void _refreshNotes() {
-  //   if (!Provider.of<BottomNavBarProvider>(context, listen: false)
-  //       .refreshNotifier
-  //       .value) {
-  //     return;
-  //   }
-  //   if (mounted) {
-  //     setState(() {
-  //       isLoading = true;
-  //     });
-  //     getDeletedData();
-  //   }
-
-  //   Provider.of<BottomNavBarProvider>(context, listen: false)
-  //       .refreshNotifier
-  //       .value = false;
-  // }
-
   Future<void> getDeletedData() async {
-    // notesNotifier = ValueNotifier<List<NoteModel>>(await getDeletedNotes());
-    // selectedItems = List.filled(notesNotifier.value.length, false);
     List<NoteModel> notes = await getDeletedNotes();
     setState(() {
       fetchedNotes = notes;
@@ -70,16 +41,14 @@ class _TrashViewState extends State<TrashView> {
   }
 
   void sortByNoteTitle() {
-    //List<NoteModel> notes
     setState(() {
       displayedNotes.sort((a, b) => a.notetitle.compareTo(b.notetitle));
     });
-    // notes.sort((a, b) => a.notetitle.compareTo(b.notetitle));
   }
 
   void searchHandler(String input) {
     setState(() {
-      filteredNotes = fetchedNotes //notesNotifier.value
+      filteredNotes = fetchedNotes
           .where((note) =>
               note.notetitle.toLowerCase().contains(input.toLowerCase()))
           .toList();
@@ -90,14 +59,12 @@ class _TrashViewState extends State<TrashView> {
   void handleSelectAllChange(bool selectAll) {
     setState(() {
       selectedItems = List.filled(displayedNotes.length, selectAll);
-      // List.filled(notesNotifier.value.length, selectAll ?? false);
+
       if (selectAll) {
         notesKeys = displayedNotes.map((note) => note.key).toList();
       } else {
         notesKeys = [];
       }
-      // Provider.of<BottomNavBarProvider>(context, listen: false)
-      //     .setNotesKeys(notesKeys);
     });
   }
 
@@ -108,22 +75,14 @@ class _TrashViewState extends State<TrashView> {
     });
     notesKeys = [];
     getDeletedData();
-    // Provider.of<BottomNavBarProvider>(context, listen: false)
-    //     .refreshNotifier
-    //     .value = true;
   }
 
   void reAddSelectedItems() {
-    // Provider.of<BottomNavBarProvider>(context, listen: false).noteKeys
     reAddAllSelectedNote(notesKeys).then((value) {
       setState(() {
         isLoading = true;
       });
       getDeletedData();
-
-      // Provider.of<BottomNavBarProvider>(context, listen: false)
-      //     .refreshNotifier
-      //     .value = true;
     });
   }
 
@@ -142,11 +101,10 @@ class _TrashViewState extends State<TrashView> {
               automaticallyImplyLeading: false,
               actions: [
                 if (displayedNotes.isNotEmpty) ...[
-                  //if (isNotesAvailable) ...[
                   IconButton(
                     icon: const Icon(Icons.sort_by_alpha),
                     onPressed: () {
-                      sortByNoteTitle(); //notesNotifier.value
+                      sortByNoteTitle();
                     },
                   ),
                   const SizedBox(width: 8),
@@ -156,7 +114,6 @@ class _TrashViewState extends State<TrashView> {
             body: Column(
               children: [
                 if (displayedNotes.isNotEmpty) ...[
-                  // if (notesNotifier.value.isNotEmpty) ...[
                   Row(
                     children: [
                       Expanded(
@@ -248,41 +205,6 @@ class _TrashViewState extends State<TrashView> {
                     },
                   ))
                 ]
-                //   Expanded(
-                //     child: ValueListenableBuilder<List<NoteModel>>(
-                //       valueListenable: notesNotifier,
-                //       builder: (context, notes, _) {
-                //         List<NoteModel> displayedNotes =
-                //             searchController.text.isEmpty ? notes : filteredNotes;
-
-                //         if (notes.isEmpty) {
-                //           return const Center(
-                //             child: Text("No Notes"),
-                //           );
-                //         }
-
-                //         if (displayedNotes.isEmpty) {
-                //           return const Center(
-                //             child: Text(
-                //               'No notes found as per the input entered by you.',
-                //             ),
-                //           );
-                //         }
-
-                //         return ListView.builder(
-                //           itemCount: displayedNotes.length,
-                //           itemBuilder: (context, index) {
-                //             NoteModel currentNote = displayedNotes[index];
-                //             return Padding(
-                //                 padding: const EdgeInsets.only(
-                //                     left: 8.0, right: 8.0, top: 0, bottom: 0),
-                //                 child:
-                //                     buildNoteCard(context, index, currentNote));
-                //           },
-                //         );
-                //       },
-                //     ),
-                //   ),
               ],
             ),
           );
@@ -332,8 +254,6 @@ class _TrashViewState extends State<TrashView> {
           notesKeys.remove(note.key);
         }
       }
-      // Provider.of<BottomNavBarProvider>(context, listen: false)
-      //     .setNotesKeys(notesKeys);
     });
   }
 
@@ -377,141 +297,4 @@ class _TrashViewState extends State<TrashView> {
       },
     );
   }
-
-  void deletePermanentlyTheDeletedNotes(
-      BuildContext context, List<dynamic> notesKeys) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          content: const Text(
-            "Do you want to delete all notes permanently?",
-          ),
-          actions: <Widget>[
-            TextButton(
-              child: const Text("No"),
-              onPressed: () => Navigator.of(context).pop(),
-            ),
-            TextButton(
-              child: const Text("Yes"),
-              onPressed: () {
-                // final navigator = Navigator.of(context);
-                deleteAllPermanently(notesKeys).then((value) {
-                  // Provider.of<BottomNavBarProvider>(context, listen: false)
-                  //     .refreshNotifier
-                  //     .value = true;
-                  getDeletedNotes();
-                  Navigator.of(context).pop();
-                });
-                // navigator.pop();
-              },
-            ),
-          ],
-        );
-      },
-    );
-  }
 }
-
-
-
-// Padding(
-//                         padding: const EdgeInsets.all(4.0),
-//                         child: ElevatedButton(
-//                           style: ElevatedButton.styleFrom(
-//                             backgroundColor: Colors.green[900],
-//                             foregroundColor: Colors.white,
-//                           ),
-//                           onPressed: () {
-//                             // Perform readd operation on selected items
-//                             showDialogForReaddOrDelete(context, true);
-//                           },
-//                           child: const Text('Readd'),
-//                         ),
-//                       ),
-//                       Padding(
-//                         padding: const EdgeInsets.all(4.0),
-//                         child: ElevatedButton(
-//                           style: ElevatedButton.styleFrom(
-//                             backgroundColor:
-//                                 Colors.red, // background (button) color
-//                             foregroundColor:
-//                                 Colors.white, // foreground (text) color
-//                           ),
-//                           onPressed: () {
-//                             // Perform delete operation on selected items
-//                             showDialogForReaddOrDelete(context, false);
-//                           },
-//                           child: const Text('Delete'),
-//                         ),
-//                       ),
-
-
-
-
-
-
-
-
-
-
-
-
-// void readd(BuildContext context, int noteIndex, NoteModel note) {
-  //   showDialog(
-  //     context: context,
-  //     builder: (BuildContext context) {
-  //       return AlertDialog(
-  //         content: Text(
-  //           "Do you want to add ${note.notetitle} again?",
-  //         ),
-  //         actions: <Widget>[
-  //           TextButton(
-  //             child: const Text("No"),
-  //             onPressed: () => Navigator.of(context).pop(),
-  //           ),
-  //           TextButton(
-  //             child: const Text("Yes"),
-  //             onPressed: () async {
-  //               final navigator = Navigator.of(context);
-  //               await updateNote(
-  //                   noteIndex: noteIndex,
-  //                   destination: note.destination,
-  //                   notetitle: note.notetitle,
-  //                   isRead: false,
-  //                   isDelete: false);
-  //               navigator.pop();
-  //             },
-  //           ),
-  //         ],
-  //       );
-  //     },
-  //   );
-  // }
-
-  // void deleteNoteFromDatabase(BuildContext context, NoteModel note) {
-  //   showDialog(
-  //     context: context,
-  //     builder: (BuildContext context) {
-  //       return AlertDialog(
-  //         content: Text(
-  //           "Do you want to delete permanently ${note.notetitle}?",
-  //         ),
-  //         actions: <Widget>[
-  //           TextButton(
-  //             child: const Text("No"),
-  //             onPressed: () => Navigator.of(context).pop(),
-  //           ),
-  //           TextButton(
-  //             child: const Text("Yes"),
-  //             onPressed: () async {
-  //               final navigator = Navigator.of(context);
-  //               await deleteNote(note.key);
-  //               navigator.pop();
-  //             },
-  //           ),
-  //         ],
-  //       );
-  //     },
-  //   );
-  // }

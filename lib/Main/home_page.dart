@@ -4,7 +4,6 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:to_do_list_app/AddNoteScreen/add_new_note_view.dart';
-// import 'package:to_do_list_app/Database/duplicate_data.dart';
 import 'package:to_do_list_app/HomeScreen/home_view.dart';
 import 'package:to_do_list_app/LocationNotesScreen/get_current_location.dart';
 import 'package:to_do_list_app/LocationNotesScreen/location_view.dart';
@@ -38,7 +37,6 @@ class _MyHomePageState extends State<MyHomePage> {
         LocationNotificationHelper();
       }
     });
-    // insertFakeData();
   }
 
   @override
@@ -51,7 +49,6 @@ class _MyHomePageState extends State<MyHomePage> {
     return ChangeNotifierProvider<BottomNavBarProvider>(
       create: (_) => BottomNavBarProvider(),
       builder: (context, child) => Scaffold(
-        // appBar: const MyAppBar(),
         body: ValueListenableBuilder(
           valueListenable:
               Provider.of<BottomNavBarProvider>(context, listen: false)
@@ -97,69 +94,4 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
     );
   }
-
-  // void deleteSelectedNotes(
-  //     BuildContext context, BottomNavBarProvider bottomNavBarProvider) {
-  //   showDialog(
-  //     context: context,
-  //     builder: (BuildContext context) {
-  //       return AlertDialog(
-  //         content: const Text(
-  //           "Do you want to delete all selected notes?",
-  //         ),
-  //         actions: <Widget>[
-  //           TextButton(
-  //               child: const Text("No"),
-  //               onPressed: () {
-  //                 Navigator.of(context).pop();
-  //               }),
-  //           TextButton(
-  //             child: const Text("Yes"),
-  //             onPressed: () {
-  //               setDeleteOfAllSelectedNote(bottomNavBarProvider.noteKeys)
-  //                   .then((value) {
-  //                 bottomNavBarProvider.refreshNotifier.value = true;
-  //                 Navigator.of(context).pop();
-  //               });
-  //             },
-  //           ),
-  //         ],
-  //       );
-  //     },
-  //   );
-  // }
-
-  // void deletePermanentlyTheDeletedNotes(
-  //   BuildContext context,
-  //   BottomNavBarProvider bottomNavBarProvider,
-  // ) {
-  //   showDialog(
-  //     context: context,
-  //     builder: (BuildContext context) {
-  //       return AlertDialog(
-  //         content: const Text(
-  //           "Do you want to delete all notes permanently?",
-  //         ),
-  //         actions: <Widget>[
-  //           TextButton(
-  //             child: const Text("No"),
-  //             onPressed: () => Navigator.of(context).pop(),
-  //           ),
-  //           TextButton(
-  //             child: const Text("Yes"),
-  //             onPressed: () {
-  //               // final navigator = Navigator.of(context);
-  //               deleteAllPermanently(bottomNavBarProvider.noteKeys)
-  //                   .then((value) {
-  //                 bottomNavBarProvider.refreshNotifier.value = true;
-  //                 Navigator.of(context).pop();
-  //               });
-  //               // navigator.pop();
-  //             },
-  //           ),
-  //         ],
-  //       );
-  //     },
-  //   );
-  // }
 }

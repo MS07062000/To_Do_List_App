@@ -1,13 +1,7 @@
 import 'package:flutter/material.dart';
-// import 'package:to_do_list_app/LocationNotesScreen/get_current_location.dart';
 import 'package:to_do_list_app/Main/home_page.dart';
-// import 'package:to_do_list_app/Notifications/background_work_manager.dart';
-// import 'package:to_do_list_app/Notifications/background_services.dart';
 
-Future main() async {
-  // WidgetsFlutterBinding.ensureInitialized();
-  // BackgroundServices();
-  // BackgroundWorkManager();
+void main() {
   runApp(const MyApp());
 }
 
