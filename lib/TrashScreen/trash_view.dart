@@ -87,13 +87,12 @@ class _TrashViewState extends State<TrashView> {
     });
   }
 
-  void handleSelectAllChange(bool? selectAll) {
+  void handleSelectAllChange(bool selectAll) {
     setState(() {
-      selectedItems = List.filled(displayedNotes.length, selectAll ?? false);
+      selectedItems = List.filled(displayedNotes.length, selectAll);
       // List.filled(notesNotifier.value.length, selectAll ?? false);
-      if (selectAll!) {
-        notesKeys = List.filled(
-            displayedNotes.length, (index) => displayedNotes[index].key);
+      if (selectAll) {
+        notesKeys = displayedNotes.map((note) => note.key).toList();
       } else {
         notesKeys = [];
       }
@@ -214,7 +213,7 @@ class _TrashViewState extends State<TrashView> {
                             value:
                                 selectedItems.every((isSelected) => isSelected),
                             onChanged: (value) {
-                              handleSelectAllChange(value);
+                              handleSelectAllChange(value!);
                             },
                           ),
                         ),

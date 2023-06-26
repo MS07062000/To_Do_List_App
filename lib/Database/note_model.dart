@@ -162,7 +162,7 @@ Future<void> setDeleteOfAllSelectedNote(List<dynamic> noteKeys) async {
   await registerHiveAdapters();
 
   final noteBox = await Hive.openBox<NoteModel>('notes');
-  for (final noteKey in noteKeys) {
+  for (var noteKey in noteKeys) {
     NoteModel? note = noteBox.get(noteKey);
     note!.isDelete = true;
     await noteBox.put(noteKey, note);
@@ -183,7 +183,7 @@ Future<List<NoteModel>> findNotesFromDestination(Position currentLocation,
     // log(note.key.toString());
     // log(note.destination);
     if (isUsedForNotification) {
-      log("${note.notetitle} ${note.isDelete}");
+      log("${note.notetitle} ${note.isDelete} ${note.isNotified}");
     }
 
     double noteLatitude = double.parse(note.destination.split(',')[0]);
@@ -207,7 +207,6 @@ Future<List<NoteModel>> findNotesFromDestination(Position currentLocation,
       return distanceInMeters <= maxDistance && !note.isDelete;
     }
   }).toList();
-
   return (filteredNotes);
 }
 

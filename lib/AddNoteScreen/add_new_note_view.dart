@@ -149,6 +149,16 @@ class _AddNewNoteViewState extends State<AddNewNoteView> {
     });
   }
 
+  void handleLocationOperation(String locationOperation) {
+    if (locationOperation == 'addLocation') {
+      addNewLocation(context);
+    }
+
+    if (locationOperation == 'removeLocation') {
+      removeLocation(context, predefinedLocations);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -157,6 +167,26 @@ class _AddNewNoteViewState extends State<AddNewNoteView> {
           ? AppBar(
               title: const Text('Location Notes'),
               automaticallyImplyLeading: false,
+              actions: [
+                const SizedBox(width: 4),
+                PopupMenuButton(
+                  icon: const Icon(Icons.more_vert),
+                  itemBuilder: (BuildContext context) => <PopupMenuEntry>[
+                    const PopupMenuItem(
+                      value: 'addLocation',
+                      child: Text('Add Location'),
+                    ),
+                    if (predefinedLocations.isNotEmpty)
+                      const PopupMenuItem(
+                        value: 'removeLocation',
+                        child: Text('Delete Location'),
+                      )
+                  ],
+                  onSelected: (selectedOption) {
+                    handleLocationOperation(selectedOption);
+                  },
+                ),
+              ],
             )
           : null,
       body: SingleChildScrollView(
@@ -498,5 +528,138 @@ class _AddNewNoteViewState extends State<AddNewNoteView> {
         isNotified: false,
       );
     }
+  }
+
+  void addNewLocation(BuildContext context) {
+    final formKey = GlobalKey<FormState>();
+    TextEditingController locationController = TextEditingController();
+    TextEditingController coordinatesController = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Add Location'),
+          content: Form(
+            key: formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextFormField(
+                    controller: locationController,
+                    decoration:
+                        const InputDecoration(labelText: 'Location Name'),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter Location Name';
+                      } else if (predefinedLocations.isNotEmpty &&
+                          predefinedLocations.contains(value)) {
+                        return 'Location Name already exists';
+                      }
+                      return null;
+                    }),
+                const SizedBox(height: 10),
+                TextFormField(
+                    controller: coordinatesController,
+                    decoration: const InputDecoration(labelText: 'Coordinates'),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter coordinates';
+                      }
+                      return null;
+                    }),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              child: const Text('Add'),
+              onPressed: () {
+                // Perform the add operation here
+                if (formKey.currentState!.validate()) {
+                  String locationName = locationController.text;
+                  String coordinates = coordinatesController.text;
+
+                  addLocation(locationName, coordinates).then((value) {
+                    formKey.currentState!.reset();
+                    // Close the alert dialog
+                    setPredefinedLocation().then((value) {
+                      _setSelectedLocation(null);
+                      Navigator.of(context).pop();
+                    });
+                  });
+                }
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void removeLocation(BuildContext context, List<dynamic> locations) {
+    final formKey = GlobalKey<FormState>();
+    dynamic selectedLocation;
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Delete Location'),
+          content: Form(
+            key: formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                DropdownButtonFormField<String>(
+                  icon: const Icon(Icons.arrow_drop_down),
+                  menuMaxHeight: 150,
+                  value: selectedLocation,
+                  onChanged: (value) {
+                    setState(() {
+                      selectedLocation = value;
+                    });
+                  },
+                  items: locations.map((location) {
+                    return DropdownMenuItem<String>(
+                      value: location,
+                      child: Text(location),
+                    );
+                  }).toList(),
+                  decoration: const InputDecoration(
+                    labelText: 'Select Location',
+                    border: OutlineInputBorder(),
+                  ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please select a location';
+                    }
+                    return null;
+                  },
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                if (formKey.currentState!.validate() &&
+                    selectedLocation != null) {
+                  // Perform the delete operation here
+                  // Delete the selected location from the database
+                  deleteLocation(selectedLocation!).then((value) {
+                    formKey.currentState!.reset();
+                    setPredefinedLocation().then((value) {
+                      _setSelectedLocation(null);
+                      Navigator.of(context).pop();
+                    });
+                  });
+                  // Close the alert dialog
+                }
+              },
+              child: const Text('Delete'),
+            ),
+          ],
+        );
+      },
+    );
   }
 }

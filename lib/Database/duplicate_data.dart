@@ -2,15 +2,31 @@ import 'package:to_do_list_app/Database/note_model.dart';
 import 'dart:math';
 
 void insertFakeData() {
-  double latitude = 19.0171114910880906;
-  double longitude = 73.095703125;
-  List<String> destination =
-      generateRandomGeopoints(latitude, longitude, 1500, 50);
-  List<String> noteTitle = generateRandomListOfStrings(50, 50);
+  // double latitude = 19.0171114910880906;
+  // double longitude = 73.095703125;
+  // List<String> destination =
+  //     generateRandomGeopoints(latitude, longitude, 300, 50);
+  List<String> destination = [
+    "19.01709, 73.09594",
+    "19.01744, 73.09632",
+    "19.01768, 73.09716",
+    "19.01831389861748, 73.09673799867467",
+    "19.01798989469581, 73.09645795903515",
+    "19.016299534163227, 73.09738225097742"
+  ];
+  // List<String> noteTitle = generateRandomListOfStrings(50, 50);
+  List<String> noteTitle = [
+    "Dance sahil",
+    "Study point",
+    "Kolekar academy",
+    "Aishwarya",
+    "SBIN atm",
+    "Shiv Kamal Height"
+  ];
 
-  List<String> textNote = generateRandomListOfStrings(25, 300);
-  List<List<String>> listOfLists = generateRandomStringLists(25, 10, 5);
-  for (int i = 0; i < 50; i++) {
+  List<String> textNote = generateRandomListOfStrings(25, 3);
+  List<List<String>> listOfLists = generateRandomStringLists(25, 10, 3);
+  for (int i = 0; i < 6; i++) {
     if (i % 2 == 0) {
       insertNote(
           destination: destination[i],

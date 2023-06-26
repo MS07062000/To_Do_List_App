@@ -1,12 +1,12 @@
 import 'dart:async';
-import 'dart:developer';
+// import 'dart:developer';
 import 'dart:typed_data';
 
-import 'package:flutter/material.dart';
+// import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:to_do_list_app/Database/note_model.dart';
-import 'package:to_do_list_app/Notifications/notification_action.dart';
+// import 'package:to_do_list_app/Notifications/notification_action.dart';
 import 'package:vibration/vibration.dart';
 
 @pragma('vm:entry-point')
@@ -14,11 +14,11 @@ void onDidReceiveBackgroundNotificationResponse(
     NotificationResponse details) async {
   if (details.payload == 'location_zone') {
     setNotified(details.id);
-    if (details.actionId!.compareTo('completed') == 0) {
-      log("completed");
-      log(details.id.toString());
-      await setDeleteOfAllSelectedNote([details.id]);
-    }
+    // if (details.actionId!.compareTo('completed') == 0) {
+    //   log("completed");
+    //   log(details.id.toString());
+    //   await setDeleteOfAllSelectedNote([details.id]);
+    // }
     await FlutterLocalNotificationsPlugin().cancel(details.id ?? -1);
   }
 }
@@ -57,9 +57,12 @@ class LocationNotificationHelper {
     if (details.payload == 'location_zone') {
       setNotified(details.id);
       // print(details.actionId);
-      if (details.actionId!.compareTo('completed') == 0) {
-        setDeleteOfAllSelectedNote([details.id]);
-      }
+      // if (details.actionId!.compareTo('completed') == 0) {
+      //   setDeleteOfAllSelectedNote([details.id]).then((value) {
+      //     log("Inside completed and setDeleteOfAllSelectedNote");
+      //     log(details.id.toString());
+      //   });
+      // }
       await flutterLocalNotificationsPlugin.cancel(details.id ?? -1);
     }
   }
@@ -80,7 +83,7 @@ class LocationNotificationHelper {
 
   void checkLocationZoneAndNotifyNotes(Position currentPosition) async {
     List<NoteModel> notes =
-        await findNotesFromDestination(currentPosition, 300.00, true);
+        await findNotesFromDestination(currentPosition, 50.00, true);
     for (NoteModel note in notes) {
       // print('${note.notetitle}');
       showNotification(note);
@@ -90,15 +93,15 @@ class LocationNotificationHelper {
   }
 
   void showNotification(NoteModel note) async {
-    List<NotificationAction> notificationActions = [
-      NotificationAction('completed', 'Complete'),
-    ];
+    // List<NotificationAction> notificationActions = [
+    //   NotificationAction('completed', 'Complete'),
+    // ];
 
-    List<AndroidNotificationAction> androidActions =
-        notificationActions.map((action) {
-      return AndroidNotificationAction(action.id, action.title,
-          titleColor: Colors.green);
-    }).toList();
+    // List<AndroidNotificationAction> androidActions =
+    //     notificationActions.map((action) {
+    //   return AndroidNotificationAction(action.id, action.title,
+    //       titleColor: Colors.green);
+    // }).toList();
 
     AndroidNotificationDetails androidPlatformChannelSpecifics =
         AndroidNotificationDetails(
@@ -106,8 +109,8 @@ class LocationNotificationHelper {
             channelDescription: notificationChannelDescription,
             importance: Importance.high,
             priority: Priority.high,
+            // actions: androidActions,
             groupKey: DateTime.now().millisecondsSinceEpoch.toString(),
-            actions: androidActions,
             vibrationPattern: Int64List.fromList(<int>[0, 5000]),
             styleInformation: BigTextStyleInformation(notificationBody(note)!,
                 contentTitle: note.notetitle));

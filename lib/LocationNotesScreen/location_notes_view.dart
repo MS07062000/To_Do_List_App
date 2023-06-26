@@ -53,7 +53,6 @@ class _LocationNoteViewState extends State<LocationNoteView> {
     //     isNotesAvailable = true;
     //   }
     //});
-
     startLocationMonitoring();
   }
 
@@ -74,10 +73,7 @@ class _LocationNoteViewState extends State<LocationNoteView> {
   //     return;
   //   }
   //   if (mounted) {
-  //     getCurrentLocation(context).then((location) {
-  //       currentLocationValue.value = location;
-  //       getNotes(currentLocationValue.value);
-  //     });
+  //     didChangeDependencies();
   //   }
   //   Provider.of<BottomNavBarProvider>(context, listen: false)
   //       .refreshNotifier
@@ -89,7 +85,7 @@ class _LocationNoteViewState extends State<LocationNoteView> {
     //     await findNotesFromDestination(currentLocation, 500.00, false));
     // selectedItems = List.filled(notesNotifier.value.length, false);
     List<NoteModel> notes =
-        await findNotesFromDestination(currentLocation, 300.00, false);
+        await findNotesFromDestination(currentLocation, 50.00, false);
     if (mounted) {
       setState(() {
         fetchedNotes = notes;
@@ -101,11 +97,12 @@ class _LocationNoteViewState extends State<LocationNoteView> {
 
   void startLocationMonitoring() {
     const locationSettings = LocationSettings(
-        accuracy: LocationAccuracy.best, timeLimit: Duration(minutes: 1));
+        accuracy: LocationAccuracy.best, timeLimit: Duration(minutes: 2));
     _positionStreamSubscription =
         Geolocator.getPositionStream(locationSettings: locationSettings).listen(
             (Position position) {
       currentLocationValue = position;
+      notesKeys = [];
       getNotes(currentLocationValue);
     }, onError: (error) => {startLocationMonitoring()});
   }
@@ -116,13 +113,12 @@ class _LocationNoteViewState extends State<LocationNoteView> {
     });
   }
 
-  void handleSelectAllChange(bool? selectAll) {
+  void handleSelectAllChange(bool selectAll) {
     setState(() {
-      selectedItems = List.filled(displayedNotes.length, selectAll ?? false);
+      selectedItems = List.filled(displayedNotes.length, selectAll);
       // List.filled(notesNotifier.value.length, selectAll ?? false);
-      if (selectAll!) {
-        notesKeys = List.filled(
-            displayedNotes.length, (index) => displayedNotes[index].key);
+      if (selectAll) {
+        notesKeys = displayedNotes.map((note) => note.key).toList();
       } else {
         notesKeys = [];
       }
@@ -239,7 +235,7 @@ class _LocationNoteViewState extends State<LocationNoteView> {
                                 value: selectedItems
                                     .every((isSelected) => isSelected),
                                 onChanged: (value) {
-                                  handleSelectAllChange(value);
+                                  handleSelectAllChange(value!);
                                 },
                               ),
                             ),
