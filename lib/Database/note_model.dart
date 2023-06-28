@@ -97,7 +97,7 @@ Future<void> updateNote({
   // print(noteKey);
   // print(noteBox.containsKey(noteKey));
 
-  await noteBox.putAt(noteKey, note);
+  await noteBox.put(noteKey, note);
 }
 
 Future<List<NoteModel>> getUnreadNotes() async {
@@ -151,7 +151,7 @@ Future<void> reAddAllSelectedNote(List<dynamic> noteKeys) async {
     NoteModel? note = noteBox.get(noteKeys[i]);
     note!.isDelete = false;
     note.isNotified = false;
-    noteBox.putAt(noteKeys[i], note);
+    noteBox.put(noteKeys[i], note);
     // print("readding");
     // print(i);
   }
@@ -171,6 +171,7 @@ Future<void> setDeleteOfAllSelectedNote(List<dynamic> noteKeys) async {
 
 Future<List<NoteModel>> findNotesFromDestination(Position currentLocation,
     double maxDistance, bool isUsedForNotification) async {
+  await Hive.close();
   await initializeHive();
   await registerHiveAdapters();
   final noteBox = await Hive.openBox<NoteModel>('notes');
@@ -216,5 +217,5 @@ Future<void> setNotified(noteKey) async {
   final noteBox = await Hive.openBox<NoteModel>('notes');
   NoteModel? note = noteBox.get(noteKey);
   note!.isNotified = true;
-  await noteBox.putAt(noteKey, note);
+  await noteBox.put(noteKey, note);
 }

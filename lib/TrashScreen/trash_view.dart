@@ -82,6 +82,7 @@ class _TrashViewState extends State<TrashView> {
       setState(() {
         isLoading = true;
       });
+      notesKeys = [];
       getDeletedData();
     });
   }
