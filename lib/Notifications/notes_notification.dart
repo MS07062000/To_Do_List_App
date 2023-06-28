@@ -71,10 +71,11 @@ class LocationNotificationHelper {
     // print("Inside notification");
     LocationSettings locationSettings =
         const LocationSettings(accuracy: LocationAccuracy.best);
+    print(Geolocator.getCurrentPosition());
     positionStreamSubscription =
         Geolocator.getPositionStream(locationSettings: locationSettings).listen(
             (Position position) async {
-      // print('${position.latitude},${position.longitude}');
+      print('${position.latitude},${position.longitude}');
       checkLocationZoneAndNotifyNotes(position);
     }, onError: (dynamic error) {
       startLocationMonitoring();

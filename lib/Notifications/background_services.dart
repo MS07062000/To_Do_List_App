@@ -63,7 +63,7 @@ class BackgroundServices {
           androidConfiguration: AndroidConfiguration(
             onStart: onStart,
             autoStart: true,
-            isForegroundMode: false,
+            isForegroundMode: true,
           ),
           iosConfiguration: IosConfiguration());
       service.startService();
