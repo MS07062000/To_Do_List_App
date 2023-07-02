@@ -47,7 +47,9 @@ dependencies:
   flutter_local_notifications: ^14.1.1
   vibration: ^1.7.7
   connectivity_plus: ^4.0.1
-
+  google_maps_place_picker_mb: ^3.0.2
+  google_maps_flutter: ^2.3.1
+  envied: ^0.3.0+3
 
 dev_dependencies:
   flutter_test:
@@ -59,6 +61,7 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^2.0.0
+  envied_generator: ^0.3.0+3
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
