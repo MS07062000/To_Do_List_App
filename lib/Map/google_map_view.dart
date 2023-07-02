@@ -31,7 +31,6 @@ class _GoogleMapViewState extends State<GoogleMapView> {
       zoomGesturesEnabled: true,
       zoomControlsEnabled: true,
       onPlacePicked: (PickResult result) {
-        print("Place picked: ${result.formattedAddress}");
         setState(() {
           selectedPlace = result;
           Navigator.of(context).pop(
