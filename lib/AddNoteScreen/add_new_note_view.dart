@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_osm_plugin/flutter_osm_plugin.dart';
 import 'package:to_do_list_app/Database/predefined_location_model.dart';
 import 'package:to_do_list_app/Main/bottom_navbar_provider.dart';
 import 'package:to_do_list_app/Database/note_model.dart';
 import 'package:provider/provider.dart';
-import 'package:to_do_list_app/Map/osm_map_view.dart';
+import 'package:to_do_list_app/Map/google_map_view.dart';
+// import 'package:flutter_osm_plugin/flutter_osm_plugin.dart';
+// import 'package:to_do_list_app/Map/osm_map_view.dart';
 
 class AddNewNoteView extends StatefulWidget {
   final NoteModel? note;
@@ -110,13 +111,22 @@ class _AddNewNoteViewState extends State<AddNewNoteView> {
   }
 
   void _onDestinationTap() async {
-    GeoPoint latLng = await Navigator.of(context).push(
+    // GeoPoint latLng = await Navigator.of(context).push(
+    //   MaterialPageRoute(
+    //     builder: (context) => const OSMMapView(),
+    //   ),
+    // );
+    // setState(() {
+    //   _destinationController.text = '${latLng.latitude}, ${latLng.longitude}';
+    // });
+    String latLng = await Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (context) => const OSMMapView(),
+        builder: (context) => const GoogleMapView(),
       ),
     );
+
     setState(() {
-      _destinationController.text = '${latLng.latitude}, ${latLng.longitude}';
+      _destinationController.text = latLng;
     });
   }
 
@@ -558,6 +568,18 @@ class _AddNewNoteViewState extends State<AddNewNoteView> {
                     }),
                 const SizedBox(height: 10),
                 TextFormField(
+                    onTap: () async {
+                      String latLng = await Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => const GoogleMapView(),
+                        ),
+                      );
+
+                      setState(() {
+                        coordinatesController.text = latLng;
+                      });
+                    },
+                    readOnly: true,
                     controller: coordinatesController,
                     decoration: const InputDecoration(labelText: 'Coordinates'),
                     validator: (value) {
