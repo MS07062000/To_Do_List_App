@@ -42,7 +42,8 @@ class _TrashViewState extends State<TrashView> {
 
   void sortByNoteTitle() {
     setState(() {
-      displayedNotes.sort((a, b) => a.notetitle.compareTo(b.notetitle));
+      displayedNotes.sort((a, b) =>
+          a.notetitle.toLowerCase().compareTo(b.notetitle.toLowerCase()));
     });
   }
 
