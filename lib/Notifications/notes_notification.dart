@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'dart:developer';
+// import 'dart:developer';
 import 'dart:typed_data';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:location/location.dart';
@@ -82,10 +82,10 @@ class LocationNotificationHelper {
     //   }
     // });
     locationPermissionAndServicesEnabled().then((isPermissionEnabled) {
-      log(isPermissionEnabled.toString());
+      // log(isPermissionEnabled);
       if (isPermissionEnabled) {
         Location().isBackgroundModeEnabled().then((value) async {
-          log(value.toString());
+          // log(value.toString());
           if (!value) {
             Location().enableBackgroundMode().then((isEnabled) {
               if (isEnabled) {
@@ -96,8 +96,8 @@ class LocationNotificationHelper {
                     locationStreamSubscription = Location()
                         .onLocationChanged
                         .listen((LocationData location) async {
-                      log("Inside notification");
-                      log('${location.latitude},${location.longitude}');
+                      // log("Inside notification");
+                      // log('${location.latitude},${location.longitude}');
                       checkLocationZoneAndNotifyNotes(location);
                     });
                   }
@@ -112,8 +112,8 @@ class LocationNotificationHelper {
                 locationStreamSubscription = Location()
                     .onLocationChanged
                     .listen((LocationData location) async {
-                  log("Inside notification");
-                  log('${location.latitude},${location.longitude}');
+                  // log("Inside notification");
+                  // log('${location.latitude},${location.longitude}');
                   checkLocationZoneAndNotifyNotes(location);
                 });
               }
@@ -145,7 +145,7 @@ class LocationNotificationHelper {
             importance: Importance.high,
             priority: Priority.high,
             groupKey: DateTime.now().millisecondsSinceEpoch.toString(),
-            vibrationPattern: Int64List.fromList(<int>[0, 5000]),
+            vibrationPattern: Int64List.fromList(<int>[0, 2000]),
             styleInformation: BigTextStyleInformation(notificationBody(note)!,
                 contentTitle: note.notetitle));
 

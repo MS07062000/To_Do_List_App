@@ -1,4 +1,5 @@
 import 'dart:async';
+// import 'dart:developer';
 import 'package:location/location.dart';
 import 'package:to_do_list_app/Database/predefined_location_model.dart';
 import 'package:to_do_list_app/Helper/helper.dart';
@@ -23,7 +24,7 @@ class NoteViewState extends State<NoteView> {
   List<NoteModel> fetchedNotes = [];
   List<NoteModel> displayedNotes = [];
   List<NoteModel> filteredNotes = [];
-  List<dynamic> preDefinedLoations = [];
+  Map<dynamic, String> preDefinedLocations = {};
 
   @override
   void initState() {
@@ -48,9 +49,10 @@ class NoteViewState extends State<NoteView> {
   }
 
   Future<void> setpreDefinedLocation() async {
-    List<dynamic> fetchedpreDefinedLocation = await getPredefinedLocations();
+    Map<dynamic, String> fetchedpreDefinedLocation =
+        await getPredefinedLocations();
     setState(() {
-      preDefinedLoations = fetchedpreDefinedLocation;
+      preDefinedLocations = fetchedpreDefinedLocation;
     });
   }
 
@@ -87,16 +89,17 @@ class NoteViewState extends State<NoteView> {
 
   void sortByNoteTitle() {
     setState(() {
-      displayedNotes.sort((a, b) => a.notetitle.compareTo(b.notetitle));
+      displayedNotes.sort((a, b) =>
+          a.notetitle.toLowerCase().compareTo(b.notetitle.toLowerCase()));
     });
   }
 
   void sortByLocation() {
     locationPermissionAndServicesEnabled().then((value) {
       if (value) {
-        setState(() {
-          displayedNotes.sort((a, b) {
-            Location().getLocation().then((location) {
+        Location().getLocation().then((location) {
+          setState(() {
+            displayedNotes.sort((a, b) {
               final double distanceToA = calculateDistance(
                   location.latitude!,
                   location.longitude!,
@@ -106,11 +109,12 @@ class NoteViewState extends State<NoteView> {
               final double distanceToB = calculateDistance(
                   location.latitude!,
                   location.longitude!,
-                  double.parse(a.destination.split(',')[0]),
-                  double.parse(a.destination.split(',')[1]));
+                  double.parse(b.destination.split(',')[0]),
+                  double.parse(b.destination.split(',')[1]));
+              // log(distanceToA.toString());
+              // log(distanceToB.toString());
               return distanceToA.compareTo(distanceToB);
             });
-            return 0;
           });
         });
       } else {

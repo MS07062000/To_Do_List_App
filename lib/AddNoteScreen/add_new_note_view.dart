@@ -21,7 +21,7 @@ class _AddNewNoteViewState extends State<AddNewNoteView> {
   final formKey = GlobalKey<FormState>();
   String _destinationType = 'predefinedLocation';
   dynamic _selectedLocation;
-  List<dynamic> predefinedLocations = [];
+  Map<dynamic, String> predefinedLocations = {};
   final TextEditingController _destinationController = TextEditingController();
   final TextEditingController _noteTitleController = TextEditingController();
   final TextEditingController _textNoteController = TextEditingController();
@@ -64,7 +64,7 @@ class _AddNewNoteViewState extends State<AddNewNoteView> {
       _checkListController
           .addAll([TextEditingController(), TextEditingController()]);
       _checklistItems.addAll(['', '']);
-      _setSelectedLocation(null);
+      _setSelectedLocation('');
     }
   }
 
@@ -77,16 +77,22 @@ class _AddNewNoteViewState extends State<AddNewNoteView> {
     super.dispose();
   }
 
-  void _setSelectedLocation(String? coordinates) async {
-    if (coordinates != null) {
-      var locationName = await getLocation(coordinates);
-      if (locationName.isNotEmpty) {
-        setState(() {
-          _selectedLocation = locationName;
-          _destinationController.text = '';
-          _destinationType = 'predefinedLocation';
-        });
-      }
+  void _setSelectedLocation(String coordinates) async {
+    if (coordinates.isNotEmpty) {
+      getLocation(coordinates).then((locationName) {
+        if (locationName.isNotEmpty) {
+          setState(() {
+            _selectedLocation = coordinates;
+            _destinationController.text = '';
+            _destinationType = 'predefinedLocation';
+          });
+        } else {
+          setState(() {
+            _destinationController.text = coordinates;
+            _destinationType = 'map';
+          });
+        }
+      });
     } else {
       if (predefinedLocations.isNotEmpty) {
         setState(() {
@@ -98,7 +104,7 @@ class _AddNewNoteViewState extends State<AddNewNoteView> {
   }
 
   Future<void> setPredefinedLocation() async {
-    List<dynamic> locationList = await getPredefinedLocations();
+    Map<dynamic, String> locationList = await getPredefinedLocations();
     setState(() {
       predefinedLocations = locationList;
     });
@@ -130,11 +136,9 @@ class _AddNewNoteViewState extends State<AddNewNoteView> {
     });
   }
 
-  void _onPredefinedLocation(location) async {
-    String locationCoordinates = await getCoordinates(location);
+  void _onPredefinedLocation(locationCoordinates) async {
     setState(() {
-      _selectedLocation = location;
-      _destinationController.text = locationCoordinates;
+      _selectedLocation = locationCoordinates;
     });
   }
 
@@ -258,12 +262,14 @@ class _AddNewNoteViewState extends State<AddNewNoteView> {
                       ),
                       icon: const Icon(Icons.arrow_drop_down),
                       menuMaxHeight: 150,
-                      items: predefinedLocations
-                          .map<DropdownMenuItem<dynamic>>((dynamic value) {
+                      items: predefinedLocations.entries
+                          .map<DropdownMenuItem<String>>((entry) {
+                        final locationName = entry.key.toString();
+                        final coordinates = entry.value;
                         return DropdownMenuItem<String>(
-                          value: value,
+                          value: coordinates,
                           child: Text(
-                            value,
+                            locationName,
                             style: const TextStyle(fontSize: 20),
                           ),
                         );
@@ -271,7 +277,7 @@ class _AddNewNoteViewState extends State<AddNewNoteView> {
                       value: _selectedLocation,
                       onChanged: (value) => _onPredefinedLocation(value),
                       validator: (value) {
-                        if (value == null || value.isEmpty) {
+                        if (value == null || value.toString().isEmpty) {
                           return 'Please select a Location';
                         }
                         return null;
@@ -292,7 +298,7 @@ class _AddNewNoteViewState extends State<AddNewNoteView> {
                 const SizedBox(height: 16.0),
                 TextFormField(
                     inputFormatters: [
-                      FilteringTextInputFormatter.allow(RegExp("[a-zA-Z]")),
+                      FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z\s]')),
                     ],
                     decoration: const InputDecoration(
                       labelText: 'Title',
@@ -362,6 +368,10 @@ class _AddNewNoteViewState extends State<AddNewNoteView> {
                   onPressed: () {
                     if (formKey.currentState!.validate()) {
                       formKey.currentState!.save();
+                      if (_destinationController.text.isEmpty) {
+                        _destinationController.text = _selectedLocation;
+                      }
+
                       if (widget.note != null && widget.noteKey != null) {
                         _submitForm(
                             false,
@@ -561,7 +571,8 @@ class _AddNewNoteViewState extends State<AddNewNoteView> {
                       if (value == null || value.isEmpty) {
                         return 'Please enter Location Name';
                       } else if (predefinedLocations.isNotEmpty &&
-                          predefinedLocations.contains(value)) {
+                          predefinedLocations.entries
+                              .any((entry) => entry.key == value)) {
                         return 'Location Name already exists';
                       }
                       return null;
@@ -604,7 +615,7 @@ class _AddNewNoteViewState extends State<AddNewNoteView> {
                     formKey.currentState!.reset();
                     // Close the alert dialog
                     setPredefinedLocation().then((value) {
-                      _setSelectedLocation(null);
+                      _setSelectedLocation('');
                       Navigator.of(context).pop();
                     });
                   });
@@ -617,7 +628,7 @@ class _AddNewNoteViewState extends State<AddNewNoteView> {
     );
   }
 
-  void removeLocation(BuildContext context, List<dynamic> locations) {
+  void removeLocation(BuildContext context, Map<dynamic, String> locations) {
     final formKey = GlobalKey<FormState>();
     dynamic selectedLocation;
     showDialog(
@@ -639,10 +650,10 @@ class _AddNewNoteViewState extends State<AddNewNoteView> {
                       selectedLocation = value;
                     });
                   },
-                  items: locations.map((location) {
+                  items: locations.entries.map((location) {
                     return DropdownMenuItem<String>(
-                      value: location,
-                      child: Text(location),
+                      value: location.key,
+                      child: Text(location.key),
                     );
                   }).toList(),
                   decoration: const InputDecoration(
@@ -669,7 +680,7 @@ class _AddNewNoteViewState extends State<AddNewNoteView> {
                   deleteLocation(selectedLocation!).then((value) {
                     formKey.currentState!.reset();
                     setPredefinedLocation().then((value) {
-                      _setSelectedLocation(null);
+                      _setSelectedLocation('');
                       Navigator.of(context).pop();
                     });
                   });

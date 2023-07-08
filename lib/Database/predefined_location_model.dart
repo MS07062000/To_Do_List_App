@@ -24,13 +24,13 @@ Future<dynamic> deleteLocation(String locationName) async {
   predefinedLocationBox.delete(locationName);
 }
 
-Future<List<dynamic>> getPredefinedLocations() async {
+Future<Map<dynamic, String>> getPredefinedLocations() async {
   await initializeHive();
 
   final predefinedLocationBox =
       await Hive.openBox<String>('PredefinedLocation');
 
-  return predefinedLocationBox.keys.toList();
+  return predefinedLocationBox.toMap();
 }
 
 Future<String> getCoordinates(String locationName) async {
@@ -46,13 +46,12 @@ Future<String> getLocation(String coordinates) async {
 
   final predefinedLocationBox =
       await Hive.openBox<String>('PredefinedLocation');
-
-  final locationList = predefinedLocationBox.keys.where((locationName) =>
-      predefinedLocationBox
-          .getAt(locationName)
-          .toString()
-          .compareTo(coordinates) ==
-      0);
+  final locationList = predefinedLocationBox.keys.where((locationName) {
+    return predefinedLocationBox
+            .get(locationName.toString())!
+            .compareTo(coordinates) ==
+        0;
+  });
 
   if (locationList.isNotEmpty) {
     return locationList.first.toString();

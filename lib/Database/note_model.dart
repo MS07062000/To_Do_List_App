@@ -196,9 +196,9 @@ Future<List<NoteModel>> findNotesFromDestination(LocationData currentLocation,
   List<NoteModel> filteredNotes = noteBox.values.where((note) {
     // log('${note.key}');
     // log('${note.destination}');
-    if (isUsedForNotification) {
-      log("${note.notetitle} ${note.isDelete} ${note.isNotified}");
-    }
+    // if (isUsedForNotification) {
+    //   log("${note.notetitle} ${note.isDelete} ${note.isNotified} ${note.destination}");
+    // }
 
     double noteLatitude = double.parse(note.destination.split(',')[0]);
     double noteLongitude =

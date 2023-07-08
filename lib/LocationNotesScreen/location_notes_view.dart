@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'dart:developer';
+// import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:location/location.dart';
 import 'package:to_do_list_app/Database/note_model.dart';
@@ -15,6 +15,7 @@ class LocationNoteView extends StatefulWidget {
 }
 
 class _LocationNoteViewState extends State<LocationNoteView> {
+  bool isLoading = true;
   bool isNotesAvailable = false;
   List<bool> selectedItems = [];
   List<dynamic> notesKeys = [];
@@ -45,6 +46,7 @@ class _LocationNoteViewState extends State<LocationNoteView> {
         fetchedNotes = notes;
         displayedNotes = fetchedNotes;
         selectedItems = List.filled(displayedNotes.length, false);
+        isLoading = false;
       });
     }
   }
@@ -66,19 +68,23 @@ class _LocationNoteViewState extends State<LocationNoteView> {
     //       })
     //     });
     locationPermissionAndServicesEnabled().then((isPermissionEnabled) {
-      log(isPermissionEnabled.toString());
+      // log(isPermissionEnabled.toString());
       if (isPermissionEnabled) {
         Location().changeSettings(interval: 30000).then((isSettingsChanged) {
           if (isSettingsChanged) {
+            // log("settings");
+            // log(isSettingsChanged.toString());
             locationStreamSubscription = Location()
                 .onLocationChanged
                 .listen((LocationData location) async {
-              log("Inside location");
-              log('${location.latitude},${location.longitude}');
+              // log("Inside location");
+              // log('${location.latitude},${location.longitude}');
               getNotes(location);
             });
           }
         });
+      } else {
+        startLocationMonitoring();
       }
     });
   }
@@ -127,101 +133,106 @@ class _LocationNoteViewState extends State<LocationNoteView> {
           ],
         )
       ]),
-      body: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Flexible(
-            fit: FlexFit.loose,
-            child: Column(
+      body: isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                if (fetchedNotes.isNotEmpty) ...[
-                  Row(
+                Flexible(
+                  fit: FlexFit.loose,
+                  child: Column(
                     children: [
-                      Expanded(
-                        child: Padding(
-                          padding:
-                              const EdgeInsets.fromLTRB(10.0, 5.0, 10.0, 5.0),
-                          child: TextField(
-                            controller: searchController,
-                            onChanged: (value) {
-                              setState(() {
-                                filteredNotes = displayedNotes
-                                    .where((note) => note.notetitle
-                                        .toLowerCase()
-                                        .contains(value.toLowerCase()))
-                                    .toList();
+                      if (fetchedNotes.isNotEmpty) ...[
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Padding(
+                                padding: const EdgeInsets.fromLTRB(
+                                    10.0, 5.0, 10.0, 5.0),
+                                child: TextField(
+                                  controller: searchController,
+                                  onChanged: (value) {
+                                    setState(() {
+                                      filteredNotes = displayedNotes
+                                          .where((note) => note.notetitle
+                                              .toLowerCase()
+                                              .contains(value.toLowerCase()))
+                                          .toList();
+                                    });
+                                  },
+                                  decoration: const InputDecoration(
+                                    labelText: 'Search Notes',
+                                    border: OutlineInputBorder(),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        if (selectedItems.contains(true))
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Padding(
+                                  padding: const EdgeInsets.fromLTRB(
+                                      10.0, 5.0, 10.0, 5.0),
+                                  child: CheckboxListTile(
+                                    controlAffinity:
+                                        ListTileControlAffinity.leading,
+                                    title: const Text('Select All'),
+                                    value: selectedItems
+                                        .every((isSelected) => isSelected),
+                                    onChanged: (value) {
+                                      handleSelectAllChange(value!);
+                                    },
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                      ],
+                      if (searchController.text.isNotEmpty &&
+                          filteredNotes.isEmpty) ...[
+                        const Expanded(
+                            child: Center(
+                          child: Text(
+                            'No notes found as per the input entered by you.',
+                          ),
+                        ))
+                      ] else if (displayedNotes.isEmpty) ...[
+                        const Expanded(
+                            child: Center(
+                          child: Text("No Notes"),
+                        ))
+                      ] else ...[
+                        Expanded(
+                          child: RefreshIndicator(
+                            onRefresh: () {
+                              return Future.delayed(const Duration(seconds: 1),
+                                  () {
+                                startLocationMonitoring();
                               });
                             },
-                            decoration: const InputDecoration(
-                              labelText: 'Search Notes',
-                              border: OutlineInputBorder(),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  if (selectedItems.contains(true))
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Padding(
-                            padding:
-                                const EdgeInsets.fromLTRB(10.0, 5.0, 10.0, 5.0),
-                            child: CheckboxListTile(
-                              controlAffinity: ListTileControlAffinity.leading,
-                              title: const Text('Select All'),
-                              value: selectedItems
-                                  .every((isSelected) => isSelected),
-                              onChanged: (value) {
-                                handleSelectAllChange(value!);
+                            child: ListView.builder(
+                              itemCount: displayedNotes.length,
+                              itemBuilder: (context, index) {
+                                NoteModel currentNote = displayedNotes[index];
+                                return Padding(
+                                  padding: const EdgeInsets.only(
+                                      left: 8.0, right: 8.0, top: 0, bottom: 0),
+                                  child: buildNoteCard(
+                                      context, index, currentNote),
+                                );
                               },
                             ),
                           ),
-                        ),
-                      ],
-                    ),
-                ],
-                if (searchController.text.isNotEmpty &&
-                    filteredNotes.isEmpty) ...[
-                  const Expanded(
-                      child: Center(
-                    child: Text(
-                      'No notes found as per the input entered by you.',
-                    ),
-                  ))
-                ] else if (displayedNotes.isEmpty) ...[
-                  const Expanded(
-                      child: Center(
-                    child: Text("No Notes"),
-                  ))
-                ] else ...[
-                  Expanded(
-                    child: RefreshIndicator(
-                      onRefresh: () {
-                        return Future.delayed(const Duration(seconds: 1), () {
-                          startLocationMonitoring();
-                        });
-                      },
-                      child: ListView.builder(
-                        itemCount: displayedNotes.length,
-                        itemBuilder: (context, index) {
-                          NoteModel currentNote = displayedNotes[index];
-                          return Padding(
-                            padding: const EdgeInsets.only(
-                                left: 8.0, right: 8.0, top: 0, bottom: 0),
-                            child: buildNoteCard(context, index, currentNote),
-                          );
-                        },
-                      ),
-                    ),
-                  )
-                ]
+                        )
+                      ]
+                    ],
+                  ),
+                ),
               ],
             ),
-          ),
-        ],
-      ),
     );
   }
 
