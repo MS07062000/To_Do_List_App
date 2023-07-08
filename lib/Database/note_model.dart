@@ -1,7 +1,8 @@
 import 'dart:developer';
-import 'package:geolocator/geolocator.dart';
 import 'package:hive_flutter/adapters.dart';
+import 'package:location/location.dart';
 import 'package:path_provider/path_provider.dart' as path_provider;
+import 'package:to_do_list_app/Helper/helper.dart';
 part 'note_model.g.dart';
 
 @HiveType(typeId: 0)
@@ -92,10 +93,10 @@ Future<void> updateNote({
       checklist: checklist,
       isDelete: isDelete ?? false,
       isNotified: isNotified ?? false);
-  // print("update");
-  // print(noteBox.keys.length);
-  // print(noteKey);
-  // print(noteBox.containsKey(noteKey));
+  // log("update");
+  //log('${noteBox.keys.length}');
+  // log('${noteKey}');
+  // log('${noteBox.containsKey(noteKey)}');
 
   await noteBox.put(noteKey, note);
 }
@@ -152,8 +153,8 @@ Future<void> reAddAllSelectedNote(List<dynamic> noteKeys) async {
     note!.isDelete = false;
     note.isNotified = false;
     noteBox.put(noteKeys[i], note);
-    // print("readding");
-    // print(i);
+    // log("readding");
+    // log(i.toString());
   }
 }
 
@@ -169,20 +170,32 @@ Future<void> setDeleteOfAllSelectedNote(List<dynamic> noteKeys) async {
   }
 }
 
-Future<List<NoteModel>> findNotesFromDestination(Position currentLocation,
-    double maxDistance, bool isUsedForNotification) async {
-  await Hive.close();
+Future<void> setNotified(noteKey) async {
   await initializeHive();
   await registerHiveAdapters();
   final noteBox = await Hive.openBox<NoteModel>('notes');
+  NoteModel? note = noteBox.get(noteKey);
+  note!.isNotified = true;
+  await noteBox.put(noteKey, note);
+}
+
+Future<List<NoteModel>> findNotesFromDestination(LocationData currentLocation,
+    double maxDistance, bool isUsedForNotification) async {
+  Hive.close().catchError((onError) {
+    log(onError);
+  });
+  await initializeHive();
+  await registerHiveAdapters();
+
+  final noteBox = await Hive.openBox<NoteModel>('notes');
   // Get the latitude and longitude of the current location
-  double currentLatitude = currentLocation.latitude;
-  double currentLongitude = currentLocation.longitude;
+  double? currentLatitude = currentLocation.latitude;
+  double? currentLongitude = currentLocation.longitude;
 
   // Filter the notes based on the distance from the current location
   List<NoteModel> filteredNotes = noteBox.values.where((note) {
-    // log(note.key.toString());
-    // log(note.destination);
+    // log('${note.key}');
+    // log('${note.destination}');
     if (isUsedForNotification) {
       log("${note.notetitle} ${note.isDelete} ${note.isNotified}");
     }
@@ -192,9 +205,9 @@ Future<List<NoteModel>> findNotesFromDestination(Position currentLocation,
         double.parse(note.destination.split(',')[1]); //note.destination;
 
     // Calculate the distance between the current location and note's destination
-    double distanceInMeters = Geolocator.distanceBetween(
-      currentLatitude,
-      currentLongitude,
+    double distanceInMeters = calculateDistance(
+      currentLatitude!,
+      currentLongitude!,
       noteLatitude,
       noteLongitude,
     );
@@ -209,13 +222,4 @@ Future<List<NoteModel>> findNotesFromDestination(Position currentLocation,
     }
   }).toList();
   return (filteredNotes);
-}
-
-Future<void> setNotified(noteKey) async {
-  await initializeHive();
-  await registerHiveAdapters();
-  final noteBox = await Hive.openBox<NoteModel>('notes');
-  NoteModel? note = noteBox.get(noteKey);
-  note!.isNotified = true;
-  await noteBox.put(noteKey, note);
 }

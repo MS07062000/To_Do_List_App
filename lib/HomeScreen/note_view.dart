@@ -1,12 +1,11 @@
 import 'dart:async';
+import 'package:location/location.dart';
 import 'package:to_do_list_app/Database/predefined_location_model.dart';
 import 'package:to_do_list_app/Helper/helper.dart';
 import 'package:flutter/material.dart';
-import 'package:geolocator/geolocator.dart';
 import 'package:to_do_list_app/HomeScreen/edit_note_view.dart';
 import 'package:to_do_list_app/HomeScreen/note_content_page.dart';
 import 'package:to_do_list_app/Database/note_model.dart';
-import 'package:to_do_list_app/LocationNotesScreen/get_current_location.dart';
 
 class NoteView extends StatefulWidget {
   const NoteView({super.key});
@@ -103,21 +102,21 @@ class NoteViewState extends State<NoteView> {
     if (isLocationServicesAvailable) {
       setState(() {
         displayedNotes.sort((a, b) {
-          Geolocator.getCurrentPosition(timeLimit: const Duration(seconds: 10))
-              .then((location) {
-            final double distanceToA = Geolocator.distanceBetween(
-                location.latitude,
-                location.longitude,
+          Location().getLocation().then((location) {
+            final double distanceToA = calculateDistance(
+                location.latitude!,
+                location.longitude!,
                 double.parse(a.destination.split(',')[0]),
                 double.parse(a.destination.split(',')[1]));
 
-            final double distanceToB = Geolocator.distanceBetween(
-                location.latitude,
-                location.longitude,
+            final double distanceToB = calculateDistance(
+                location.latitude!,
+                location.longitude!,
                 double.parse(a.destination.split(',')[0]),
                 double.parse(a.destination.split(',')[1]));
             return distanceToA.compareTo(distanceToB);
           });
+
           return 0;
         });
       });

@@ -1,10 +1,10 @@
 import 'dart:async';
-// import 'dart:developer';
+import 'dart:developer';
 import 'dart:typed_data';
-import 'package:geolocator/geolocator.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:location/location.dart';
 import 'package:to_do_list_app/Database/note_model.dart';
-import 'package:vibration/vibration.dart';
+import 'package:to_do_list_app/Helper/helper.dart';
 
 @pragma('vm:entry-point')
 void onDidReceiveBackgroundNotificationResponse(
@@ -18,26 +18,42 @@ void onDidReceiveBackgroundNotificationResponse(
 class LocationNotificationHelper {
   FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
       FlutterLocalNotificationsPlugin();
-
   String notificationChannelId = 'location_channel';
   String notificationChannelName = 'Location Notifications';
   String notificationChannelDescription =
       'Notifications for location-based notes';
-  StreamSubscription<Position>? positionStreamSubscription;
+  StreamSubscription<LocationData>? locationStreamSubscription;
+
   LocationNotificationHelper() {
     initializeNotifications();
-    startLocationMonitoring();
   }
 
   void initializeNotifications() async {
-    const AndroidInitializationSettings initializationSettingsAndroid =
-        AndroidInitializationSettings('launch_background');
-    InitializationSettings initializationSettings =
-        const InitializationSettings(android: initializationSettingsAndroid);
-    await flutterLocalNotificationsPlugin.initialize(initializationSettings,
-        onDidReceiveBackgroundNotificationResponse:
-            onDidReceiveBackgroundNotificationResponse,
-        onDidReceiveNotificationResponse: onDidReceiveNotificationResponse);
+    await flutterLocalNotificationsPlugin
+        .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>()!
+        .requestPermission()
+        .then((isPermissionGranted) async {
+      if (isPermissionGranted!) {
+        const AndroidInitializationSettings initializationSettingsAndroid =
+            AndroidInitializationSettings('launch_background');
+        InitializationSettings initializationSettings =
+            const InitializationSettings(
+                android: initializationSettingsAndroid);
+        await flutterLocalNotificationsPlugin
+            .initialize(initializationSettings,
+                onDidReceiveBackgroundNotificationResponse:
+                    onDidReceiveBackgroundNotificationResponse,
+                onDidReceiveNotificationResponse:
+                    onDidReceiveNotificationResponse)
+            .then((isInitialized) {
+          if (isInitialized!) {
+            // Future.delayed(const Duration(seconds: 5), startLocationMonitoring);
+            startLocationMonitoring();
+          }
+        });
+      }
+    });
   }
 
   void onDidReceiveNotificationResponse(NotificationResponse details) async {
@@ -49,24 +65,75 @@ class LocationNotificationHelper {
   }
 
   void startLocationMonitoring() {
-    LocationSettings locationSettings =
-        const LocationSettings(accuracy: LocationAccuracy.best);
-    positionStreamSubscription =
-        Geolocator.getPositionStream(locationSettings: locationSettings).listen(
-            (Position position) async {
-      checkLocationZoneAndNotifyNotes(position);
-    }, onError: (dynamic error) {
-      startLocationMonitoring();
+    // locationPermissionAndServicesEnabled().then((isEnabled) {
+    //   log(isEnabled.toString());
+    //   if (isEnabled) {
+    //     locationStreamSubscription =
+    //         Location().onLocationChanged.listen((LocationData location) async {
+    //       log("Inside notification");
+    //       log('${location.latitude},${location.longitude}');
+    //       checkLocationZoneAndNotifyNotes(location);
+    //       locationStreamSubscription?.pause(Future<void>(() async {
+    //         log(DateTime.timestamp().toString());
+    //         await Future.delayed(const Duration(seconds: 30),
+    //             locationStreamSubscription?.resume);
+    //       }));
+    //     });
+    //   }
+    // });
+    locationPermissionAndServicesEnabled().then((isPermissionEnabled) {
+      log(isPermissionEnabled.toString());
+      if (isPermissionEnabled) {
+        Location().isBackgroundModeEnabled().then((value) async {
+          log(value.toString());
+          if (!value) {
+            Location().enableBackgroundMode().then((isEnabled) {
+              if (isEnabled) {
+                Location()
+                    .changeSettings(interval: 30000)
+                    .then((isSettingsChanged) {
+                  if (isSettingsChanged) {
+                    locationStreamSubscription = Location()
+                        .onLocationChanged
+                        .listen((LocationData location) async {
+                      log("Inside notification");
+                      log('${location.latitude},${location.longitude}');
+                      checkLocationZoneAndNotifyNotes(location);
+                    });
+                  }
+                });
+              }
+            });
+          } else {
+            Location()
+                .changeSettings(interval: 30000)
+                .then((isSettingsChanged) {
+              if (isSettingsChanged) {
+                locationStreamSubscription = Location()
+                    .onLocationChanged
+                    .listen((LocationData location) async {
+                  log("Inside notification");
+                  log('${location.latitude},${location.longitude}');
+                  checkLocationZoneAndNotifyNotes(location);
+                });
+              }
+            });
+          }
+        });
+      }
     });
   }
 
-  void checkLocationZoneAndNotifyNotes(Position currentPosition) async {
+  void stopLocationMonitoring() {
+    locationStreamSubscription?.cancel();
+  }
+
+  void checkLocationZoneAndNotifyNotes(LocationData currentPosition) async {
     List<NoteModel> notes =
         await findNotesFromDestination(currentPosition, 50.00, true);
     for (NoteModel note in notes) {
       showNotification(note);
       setNotified(note.key);
-      vibrateDevice();
     }
   }
 
@@ -103,15 +170,5 @@ class LocationNotificationHelper {
       return note.checklist!.join("\n");
     }
     return null;
-  }
-
-  void vibrateDevice() async {
-    if (await Vibration.hasVibrator() != null) {
-      Vibration.vibrate(duration: 1000);
-    } else {
-      if (await Vibration.hasCustomVibrationsSupport() != null) {
-        Vibration.vibrate(duration: 1000);
-      }
-    }
   }
 }
