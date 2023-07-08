@@ -43,13 +43,6 @@ class NoteViewState extends State<NoteView> {
       fetchedNotes = notes;
       displayedNotes = fetchedNotes;
       selectedItems = List.filled(displayedNotes.length, false);
-      locationPermissionAndServicesEnabled().then((value) {
-        if (value) {
-          isLocationServicesAvailable = true;
-        } else {
-          isLocationServicesAvailable = false;
-        }
-      });
       isLoading = false;
     });
   }
@@ -99,28 +92,31 @@ class NoteViewState extends State<NoteView> {
   }
 
   void sortByLocation() {
-    if (isLocationServicesAvailable) {
-      setState(() {
-        displayedNotes.sort((a, b) {
-          Location().getLocation().then((location) {
-            final double distanceToA = calculateDistance(
-                location.latitude!,
-                location.longitude!,
-                double.parse(a.destination.split(',')[0]),
-                double.parse(a.destination.split(',')[1]));
+    locationPermissionAndServicesEnabled().then((value) {
+      if (value) {
+        setState(() {
+          displayedNotes.sort((a, b) {
+            Location().getLocation().then((location) {
+              final double distanceToA = calculateDistance(
+                  location.latitude!,
+                  location.longitude!,
+                  double.parse(a.destination.split(',')[0]),
+                  double.parse(a.destination.split(',')[1]));
 
-            final double distanceToB = calculateDistance(
-                location.latitude!,
-                location.longitude!,
-                double.parse(a.destination.split(',')[0]),
-                double.parse(a.destination.split(',')[1]));
-            return distanceToA.compareTo(distanceToB);
+              final double distanceToB = calculateDistance(
+                  location.latitude!,
+                  location.longitude!,
+                  double.parse(a.destination.split(',')[0]),
+                  double.parse(a.destination.split(',')[1]));
+              return distanceToA.compareTo(distanceToB);
+            });
+            return 0;
           });
-
-          return 0;
         });
-      });
-    }
+      } else {
+        locationPermissionAndServicesEnabled();
+      }
+    });
   }
 
   @override
@@ -148,11 +144,10 @@ class NoteViewState extends State<NoteView> {
                               value: 'noteTitle',
                               child: Text('Sort by Note Title'),
                             ),
-                            if (isLocationServicesAvailable)
-                              const PopupMenuItem(
-                                value: 'location',
-                                child: Text('Sort by Location'),
-                              )
+                            const PopupMenuItem(
+                              value: 'location',
+                              child: Text('Sort by Location'),
+                            )
                           ],
                           onSelected: (selectedOption) {
                             sortHandler(selectedOption);
