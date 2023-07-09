@@ -11,22 +11,26 @@ class NoteModel extends HiveObject {
   late String destination;
 
   @HiveField(1)
-  late String notetitle;
+  late String destinationCoordinates;
 
   @HiveField(2)
-  String? textnote;
+  late String notetitle;
 
   @HiveField(3)
-  List<String>? checklist;
+  String? textnote;
 
   @HiveField(4)
-  bool isDelete;
+  List<String>? checklist;
 
   @HiveField(5)
+  bool isDelete;
+
+  @HiveField(6)
   bool isNotified;
 
   NoteModel({
     required this.destination,
+    required this.destinationCoordinates,
     required this.notetitle,
     this.textnote,
     this.checklist,
@@ -52,6 +56,7 @@ bool isNoteModelRegistered() {
 
 Future<void> insertNote({
   required String destination,
+  required String destinationCoordinates,
   required String notetitle,
   String? textnote,
   List<String>? checklist,
@@ -63,6 +68,7 @@ Future<void> insertNote({
 
   final note = NoteModel(
       destination: destination,
+      destinationCoordinates: destinationCoordinates,
       notetitle: notetitle,
       textnote: textnote,
       checklist: checklist,
@@ -75,6 +81,7 @@ Future<void> insertNote({
 Future<void> updateNote({
   required dynamic noteKey,
   required String destination,
+  required String destinationCoordinates,
   required String notetitle,
   String? textnote,
   List<String>? checklist,
@@ -88,6 +95,7 @@ Future<void> updateNote({
 
   final note = NoteModel(
       destination: destination,
+      destinationCoordinates: destinationCoordinates,
       notetitle: notetitle,
       textnote: textnote,
       checklist: checklist,

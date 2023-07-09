@@ -6,51 +6,41 @@ Future<void> initializeHive() async {
   Hive.init(appDocumentDir.path);
 }
 
-Future<dynamic> addLocation(String locationName, String coordinates) async {
+Future<dynamic> addLocation(String userDefinedLocationName, String locationName,
+    String coordinates) async {
   await initializeHive();
 
-  final predefinedLocationBox =
-      await Hive.openBox<String>('PredefinedLocation');
+  final predefinedLocationBox = await Hive.openBox<Map>('PredefinedLocation');
 
-  predefinedLocationBox.put(locationName, coordinates);
+  predefinedLocationBox.put(userDefinedLocationName,
+      {'locationName': locationName, 'destinationCoordinates': coordinates});
 }
 
-Future<dynamic> deleteLocation(String locationName) async {
+Future<dynamic> deleteLocation(String userDefinedLocationName) async {
   await initializeHive();
 
-  final predefinedLocationBox =
-      await Hive.openBox<String>('PredefinedLocation');
+  final predefinedLocationBox = await Hive.openBox<Map>('PredefinedLocation');
 
-  predefinedLocationBox.delete(locationName);
+  predefinedLocationBox.delete(userDefinedLocationName);
 }
 
-Future<Map<dynamic, String>> getPredefinedLocations() async {
+Future<Map<dynamic, Map>> getPredefinedLocations() async {
   await initializeHive();
 
-  final predefinedLocationBox =
-      await Hive.openBox<String>('PredefinedLocation');
+  final predefinedLocationBox = await Hive.openBox<Map>('PredefinedLocation');
 
   return predefinedLocationBox.toMap();
 }
 
-Future<String> getCoordinates(String locationName) async {
+Future<String> getLocationInfo(String locationName) async {
   await initializeHive();
 
-  final predefinedLocationBox =
-      await Hive.openBox<String>('PredefinedLocation');
-  return predefinedLocationBox.get(locationName).toString();
-}
-
-Future<String> getLocation(String coordinates) async {
-  await initializeHive();
-
-  final predefinedLocationBox =
-      await Hive.openBox<String>('PredefinedLocation');
-  final locationList = predefinedLocationBox.keys.where((locationName) {
+  final predefinedLocationBox = await Hive.openBox<Map>('PredefinedLocation');
+  final locationList =
+      predefinedLocationBox.keys.where((userDefinedLocationName) {
     return predefinedLocationBox
-            .get(locationName.toString())!
-            .compareTo(coordinates) ==
-        0;
+        .get(userDefinedLocationName.toString())!
+        .containsValue(locationName);
   });
 
   if (locationList.isNotEmpty) {

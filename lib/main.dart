@@ -22,7 +22,7 @@ class _MyAppState extends State<MyApp> {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Note App',
+      title: 'Location List',
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),

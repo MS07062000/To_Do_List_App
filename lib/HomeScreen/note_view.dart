@@ -1,11 +1,12 @@
 import 'dart:async';
 // import 'dart:developer';
 import 'package:location/location.dart';
-import 'package:to_do_list_app/Database/predefined_location_model.dart';
+import 'package:to_do_list_app/Helper/NoteCard/note_card.dart';
+import 'package:to_do_list_app/Helper/SearchBar/search_bar.dart';
 import 'package:to_do_list_app/Helper/helper.dart';
 import 'package:flutter/material.dart';
 import 'package:to_do_list_app/HomeScreen/edit_note_view.dart';
-import 'package:to_do_list_app/HomeScreen/note_content_page.dart';
+// import 'package:to_do_list_app/HomeScreen/note_content_page.dart';
 import 'package:to_do_list_app/Database/note_model.dart';
 
 class NoteView extends StatefulWidget {
@@ -24,13 +25,11 @@ class NoteViewState extends State<NoteView> {
   List<NoteModel> fetchedNotes = [];
   List<NoteModel> displayedNotes = [];
   List<NoteModel> filteredNotes = [];
-  Map<dynamic, String> preDefinedLocations = {};
 
   @override
   void initState() {
     super.initState();
     getNotes();
-    setpreDefinedLocation();
   }
 
   @override
@@ -45,14 +44,6 @@ class NoteViewState extends State<NoteView> {
       displayedNotes = fetchedNotes;
       selectedItems = List.filled(displayedNotes.length, false);
       isLoading = false;
-    });
-  }
-
-  Future<void> setpreDefinedLocation() async {
-    Map<dynamic, String> fetchedpreDefinedLocation =
-        await getPredefinedLocations();
-    setState(() {
-      preDefinedLocations = fetchedpreDefinedLocation;
     });
   }
 
@@ -125,163 +116,149 @@ class NoteViewState extends State<NoteView> {
 
   @override
   Widget build(BuildContext context) {
-    return isLoading
-        ? Scaffold(
-            appBar: AppBar(
-              title: const Text("Location Notes"),
-              automaticallyImplyLeading: false,
-            ),
-            body: const Center(child: CircularProgressIndicator()))
-        : Scaffold(
-            appBar: AppBar(
-                title: const Text("Location Notes"),
-                automaticallyImplyLeading: false,
-                actions: [
-                  Row(
-                    children: [
-                      if (displayedNotes.isNotEmpty) ...[
-                        PopupMenuButton(
-                          icon: const Icon(Icons.sort),
-                          itemBuilder: (BuildContext context) =>
-                              <PopupMenuEntry>[
-                            const PopupMenuItem(
-                              value: 'noteTitle',
-                              child: Text('Sort by Note Title'),
-                            ),
-                            const PopupMenuItem(
-                              value: 'location',
-                              child: Text('Sort by Location'),
-                            )
-                          ],
-                          onSelected: (selectedOption) {
-                            sortHandler(selectedOption);
-                          },
-                        ),
-                        const SizedBox(width: 4),
-                        if (notesKeys.isNotEmpty)
-                          IconButton(
-                            icon: const Icon(Icons.delete),
-                            onPressed: () {
-                              deleteSelectedNotes(context, notesKeys);
-                            },
-                          ),
-                      ],
+    return Scaffold(
+      appBar: AppBar(
+          title: const Text("Location List"),
+          automaticallyImplyLeading: false,
+          actions: [
+            Row(
+              children: [
+                if (displayedNotes.isNotEmpty) ...[
+                  PopupMenuButton(
+                    icon: const Icon(Icons.sort),
+                    itemBuilder: (BuildContext context) => <PopupMenuEntry>[
+                      const PopupMenuItem(
+                        value: 'noteTitle',
+                        child: Text('Sort by Note Title'),
+                      ),
+                      const PopupMenuItem(
+                        value: 'location',
+                        child: Text('Sort by Location'),
+                      )
                     ],
-                  )
-                ]),
-            body: Column(
+                    onSelected: (selectedOption) {
+                      sortHandler(selectedOption);
+                    },
+                  ),
+                  const SizedBox(width: 4),
+                  if (notesKeys.isNotEmpty)
+                    IconButton(
+                      icon: const Icon(Icons.delete),
+                      onPressed: () {
+                        deleteSelectedNotes(context, notesKeys);
+                      },
+                    ),
+                ],
+              ],
+            )
+          ]),
+      body: isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : Column(
               children: [
                 if (fetchedNotes.isNotEmpty) ...[
                   Row(
                     children: [
                       Expanded(
-                        child: Padding(
-                          padding:
-                              const EdgeInsets.fromLTRB(10.0, 5.0, 10.0, 5.0),
-                          child: TextField(
-                            controller: searchController,
-                            onChanged: (value) {
-                              setState(() {
-                                searchHandler(value);
-                              });
-                            },
-                            decoration: const InputDecoration(
-                              labelText: 'Search Notes',
-                              border: OutlineInputBorder(),
-                            ),
-                          ),
-                        ),
-                      ),
+                          child: searchBar(searchController, searchHandler)),
                     ],
                   ),
                   if (selectedItems.contains(true))
                     Row(
                       children: [
-                        Expanded(
-                          child: Padding(
-                            padding:
-                                const EdgeInsets.fromLTRB(10.0, 5.0, 10.0, 5.0),
-                            child: CheckboxListTile(
-                              controlAffinity: ListTileControlAffinity.leading,
-                              title: const Text('Select All'),
-                              value: selectedItems
-                                  .every((isSelected) => isSelected),
-                              onChanged: (value) {
-                                handleSelectAllChange(value!);
-                              },
-                            ),
-                          ),
-                        ),
+                        Expanded(child: selectAllContainer()),
                       ],
                     ),
                 ],
-                if (searchController.text.isNotEmpty &&
-                    filteredNotes.isEmpty) ...[
-                  const Expanded(
-                      child: Center(
-                    child: Text(
-                      'No notes found as per the input entered by you.',
-                    ),
-                  ))
-                ] else if (displayedNotes.isEmpty) ...[
-                  const Expanded(
-                      child: Center(
-                    child: Text("No Notes"),
-                  ))
-                ] else ...[
-                  Expanded(
-                      child: ListView.builder(
-                    itemCount: displayedNotes.length,
-                    itemBuilder: (context, index) {
-                      NoteModel currentNote = displayedNotes[index];
-                      return Padding(
-                        padding: const EdgeInsets.only(
-                            left: 8.0, right: 8.0, top: 0, bottom: 0),
-                        child: buildNoteCard(context, index, currentNote),
-                      );
-                    },
-                  ))
-                ]
+                noteListContainer()
               ],
-            ));
+            ),
+    );
   }
 
-  Widget buildNoteCard(BuildContext context, int noteIndex, NoteModel note) {
-    return GestureDetector(
-        onLongPress: () {
-          setState(() {
-            selectedItems[noteIndex] = true;
-            handleCardCheckBox(true, noteIndex, note);
-          });
+  Widget selectAllContainer() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(10.0, 5.0, 10.0, 5.0),
+      child: CheckboxListTile(
+        controlAffinity: ListTileControlAffinity.leading,
+        title: const Text('Select All'),
+        value: selectedItems.every((isSelected) => isSelected),
+        onChanged: (value) {
+          handleSelectAllChange(value!);
         },
-        child: Card(
-          child: ListTile(
-            shape: RoundedRectangleBorder(
-              side: BorderSide(color: getRandomColor(), width: 1),
-              borderRadius: BorderRadius.circular(5),
-            ),
-            leading: selectedItems.contains(true)
-                ? Checkbox(
-                    value: selectedItems[noteIndex],
-                    onChanged: (value) {
-                      handleCardCheckBox(value, noteIndex, note);
-                    },
-                  )
-                : null,
-            title: Text(note.notetitle),
-            trailing: IconButton(
-              icon: const Icon(Icons.edit),
-              onPressed: () {
-                navigateToNoteEdit(context, note);
-              },
-            ),
-            onTap: () {
-              // Handle tap on note card
-              navigateToNoteView(context, note);
-            },
-          ),
-        ));
+      ),
+    );
   }
+
+  Widget noteListContainer() {
+    if (searchController.text.isNotEmpty && filteredNotes.isEmpty) {
+      return const Expanded(
+        child: Center(
+          child: Text(
+            'No notes found as per the input entered by you.',
+          ),
+        ),
+      );
+    } else if (displayedNotes.isEmpty) {
+      return const Expanded(
+        child: Center(
+          child: Text("No Notes"),
+        ),
+      );
+    } else {
+      return Expanded(
+        child: ListView.builder(
+          itemCount: displayedNotes.length,
+          itemBuilder: (context, index) {
+            NoteModel currentNote = displayedNotes[index];
+            return Padding(
+              padding: const EdgeInsets.only(
+                  left: 8.0, right: 8.0, top: 0, bottom: 0),
+              child: buildNoteCard(context, handleCardCheckBox,
+                  navigateToNoteEdit, selectedItems, index, currentNote),
+            );
+          },
+        ),
+      );
+    }
+  }
+
+  // Widget buildNoteCard(BuildContext context, int noteIndex, NoteModel note) {
+  //   return GestureDetector(
+  //       onLongPress: () {
+  //         setState(() {
+  //           selectedItems[noteIndex] = true;
+  //           handleCardCheckBox(true, noteIndex, note);
+  //         });
+  //       },
+  //       child: Card(
+  //         child: ListTile(
+  //           shape: RoundedRectangleBorder(
+  //             side: BorderSide(color: getRandomColor(), width: 1),
+  //             borderRadius: BorderRadius.circular(5),
+  //           ),
+  //           leading: selectedItems.contains(true)
+  //               ? Checkbox(
+  //                   value: selectedItems[noteIndex],
+  //                   onChanged: (value) {
+  //                     handleCardCheckBox(value, noteIndex, note);
+  //                   },
+  //                 )
+  //               : null,
+  //           title: Text(note.notetitle),
+  //           trailing: IconButton(
+  //             icon: const Icon(Icons.edit),
+  //             onPressed: () {
+  //               navigateToNoteEdit(context, note);
+  //             },
+  //           ),
+  //           onTap: () {
+  //             // Handle tap on note card
+  //             navigateToNoteView(context, note);
+  //           },
+  //         ),
+  //       ));
+  // }
 
   void handleCardCheckBox(
       bool? checkBoxSelected, int noteIndex, NoteModel note) {
@@ -299,15 +276,15 @@ class NoteViewState extends State<NoteView> {
     });
   }
 
-  void navigateToNoteView(BuildContext context, NoteModel note) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        maintainState: false,
-        builder: (context) => NoteContentPage(note: note),
-      ),
-    );
-  }
+  // void navigateToNoteView(BuildContext context, NoteModel note) {
+  //   Navigator.push(
+  //     context,
+  //     MaterialPageRoute(
+  //       maintainState: false,
+  //       builder: (context) => NoteContentPage(note: note),
+  //     ),
+  //   );
+  // }
 
   void navigateToNoteEdit(BuildContext context, NoteModel note) {
     Navigator.push(

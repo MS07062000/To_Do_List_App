@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:to_do_list_app/AddNoteScreen/add_new_note_view.dart';
+import 'package:to_do_list_app/AddNoteScreen/add_new_note.dart';
 import 'package:to_do_list_app/Helper/connectivity_handler.dart';
 import 'package:to_do_list_app/HomeScreen/home_view.dart';
 import 'package:to_do_list_app/LocationNotesScreen/location_view.dart';
@@ -31,15 +31,6 @@ class _MyHomePageState extends State<MyHomePage> {
   void initState() {
     super.initState();
     connectivityCheck.startStreamSubscription(context);
-    // Timer.periodic(const Duration(minutes: 2), (timer) async {
-    //   var connectivityResult = await (Connectivity().checkConnectivity());
-    //   bool locationServices = await locationPermissionAndServicesEnabled();
-    //   if (connectivityResult == ConnectivityResult.mobile ||
-    //       connectivityResult == ConnectivityResult.wifi && locationServices) {
-    //     log("inside background");
-    //     LocationNotificationHelper();
-    //   }
-    // });
   }
 
   @override
@@ -82,7 +73,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 ),
                 BottomNavigationBarItem(
                   icon: Icon(Icons.location_on),
-                  label: 'Location Notes',
+                  label: 'Location List',
                 ),
                 BottomNavigationBarItem(
                   icon: Icon(Icons.add),

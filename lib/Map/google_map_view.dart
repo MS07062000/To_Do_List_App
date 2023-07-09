@@ -33,8 +33,11 @@ class _GoogleMapViewState extends State<GoogleMapView> {
       onPlacePicked: (PickResult result) {
         setState(() {
           selectedPlace = result;
-          Navigator.of(context).pop(
-              '${selectedPlace?.geometry!.location.lat},${selectedPlace?.geometry!.location.lng}');
+          Navigator.of(context).pop({
+            'destinationAddress': selectedPlace?.formattedAddress.toString(),
+            'coordinates':
+                '${selectedPlace?.geometry!.location.lat},${selectedPlace?.geometry!.location.lng}'
+          });
         });
       },
     );
