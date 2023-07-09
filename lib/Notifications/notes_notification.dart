@@ -130,7 +130,7 @@ class LocationNotificationHelper {
 
   void checkLocationZoneAndNotifyNotes(LocationData currentPosition) async {
     List<NoteModel> notes =
-        await findNotesFromDestination(currentPosition, 50.00, true);
+        await findNotesFromDestination(currentPosition, 10.00, true);
     for (NoteModel note in notes) {
       showNotification(note);
       setNotified(note.key);
