@@ -205,12 +205,13 @@ Future<List<NoteModel>> findNotesFromDestination(LocationData currentLocation,
     // log('${note.key}');
     // log('${note.destination}');
     // if (isUsedForNotification) {
-    //   log("${note.notetitle} ${note.isDelete} ${note.isNotified} ${note.destination}");
+    //   log("${note.notetitle} ${note.isDelete} ${note.isNotified} ${note.destinationCoordinates}");
     // }
 
-    double noteLatitude = double.parse(note.destination.split(',')[0]);
-    double noteLongitude =
-        double.parse(note.destination.split(',')[1]); //note.destination;
+    double noteLatitude =
+        double.parse(note.destinationCoordinates.split(',')[0]);
+    double noteLongitude = double.parse(
+        note.destinationCoordinates.split(',')[1]); //note.destination;
 
     // Calculate the distance between the current location and note's destination
     double distanceInMeters = calculateDistance(
