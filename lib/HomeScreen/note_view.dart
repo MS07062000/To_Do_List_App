@@ -94,14 +94,14 @@ class NoteViewState extends State<NoteView> {
               final double distanceToA = calculateDistance(
                   location.latitude!,
                   location.longitude!,
-                  double.parse(a.destination.split(',')[0]),
-                  double.parse(a.destination.split(',')[1]));
+                  double.parse(a.destinationCoordinates.split(',')[0]),
+                  double.parse(a.destinationCoordinates.split(',')[1]));
 
               final double distanceToB = calculateDistance(
                   location.latitude!,
                   location.longitude!,
-                  double.parse(b.destination.split(',')[0]),
-                  double.parse(b.destination.split(',')[1]));
+                  double.parse(b.destinationCoordinates.split(',')[0]),
+                  double.parse(b.destinationCoordinates.split(',')[1]));
               // log(distanceToA.toString());
               // log(distanceToB.toString());
               return distanceToA.compareTo(distanceToB);
@@ -223,43 +223,6 @@ class NoteViewState extends State<NoteView> {
     }
   }
 
-  // Widget buildNoteCard(BuildContext context, int noteIndex, NoteModel note) {
-  //   return GestureDetector(
-  //       onLongPress: () {
-  //         setState(() {
-  //           selectedItems[noteIndex] = true;
-  //           handleCardCheckBox(true, noteIndex, note);
-  //         });
-  //       },
-  //       child: Card(
-  //         child: ListTile(
-  //           shape: RoundedRectangleBorder(
-  //             side: BorderSide(color: getRandomColor(), width: 1),
-  //             borderRadius: BorderRadius.circular(5),
-  //           ),
-  //           leading: selectedItems.contains(true)
-  //               ? Checkbox(
-  //                   value: selectedItems[noteIndex],
-  //                   onChanged: (value) {
-  //                     handleCardCheckBox(value, noteIndex, note);
-  //                   },
-  //                 )
-  //               : null,
-  //           title: Text(note.notetitle),
-  //           trailing: IconButton(
-  //             icon: const Icon(Icons.edit),
-  //             onPressed: () {
-  //               navigateToNoteEdit(context, note);
-  //             },
-  //           ),
-  //           onTap: () {
-  //             // Handle tap on note card
-  //             navigateToNoteView(context, note);
-  //           },
-  //         ),
-  //       ));
-  // }
-
   void handleCardCheckBox(
       bool? checkBoxSelected, int noteIndex, NoteModel note) {
     setState(() {
@@ -276,21 +239,11 @@ class NoteViewState extends State<NoteView> {
     });
   }
 
-  // void navigateToNoteView(BuildContext context, NoteModel note) {
-  //   Navigator.push(
-  //     context,
-  //     MaterialPageRoute(
-  //       maintainState: false,
-  //       builder: (context) => NoteContentPage(note: note),
-  //     ),
-  //   );
-  // }
-
   void navigateToNoteEdit(BuildContext context, NoteModel note) {
     Navigator.push(
       context,
       MaterialPageRoute(
-        maintainState: false,
+        maintainState: true,
         builder: (context) => EditNoteView(noteKey: note.key, note: note),
       ),
     ).then((value) {

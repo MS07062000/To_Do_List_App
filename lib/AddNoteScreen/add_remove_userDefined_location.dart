@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:to_do_list_app/Database/userDefined_location_model.dart';
+import 'package:to_do_list_app/Database/user_defined_location_model.dart';
 import 'package:to_do_list_app/Map/google_map_view.dart';
 
 typedef SetStateCallBack = void Function(Function());
@@ -59,17 +59,21 @@ Future<bool> addNewLocation(BuildContext context, SetStateCallBack setState,
 
                           setState(() {
                             locationNameController.text =
-                                locationInfo['destinationAddress']!;
+                                locationInfo['destinationName']!;
                             locationCoordinates = locationInfo['coordinates']!;
                           });
                         },
                         readOnly: true,
                         controller: locationNameController,
-                        decoration:
-                            const InputDecoration(labelText: 'Destination'),
+                        decoration: const InputDecoration(
+                            labelText: 'Destination Name'),
                         validator: (value) {
                           if (value == null || value.isEmpty) {
                             return 'Please enter destination';
+                          } else if (userDefinedLocations.isNotEmpty &&
+                              userDefinedLocations.entries.any((entry) =>
+                                  entry.value['locationName'] == value)) {
+                            return 'Destination Name already exists';
                           }
                           return null;
                         }),

@@ -44,7 +44,7 @@ Future<Map> getLocationInfo(String coordinates) async {
   });
 
   if (locationList.isNotEmpty) {
-    return locationList.first;
+    return predefinedLocationBox.get(locationList.first)!;
   }
   return {};
 }

@@ -33,9 +33,8 @@ class _GoogleMapViewState extends State<GoogleMapView> {
       onPlacePicked: (PickResult result) {
         setState(() {
           selectedPlace = result;
-
           Map<String, String?> placePicked = {
-            'destinationAddress': selectedPlace!.formattedAddress.toString(),
+            'destinationName': selectedPlace!.name.toString(),
             'coordinates':
                 '${selectedPlace?.geometry!.location.lat},${selectedPlace?.geometry!.location.lng}'
           };

@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:to_do_list_app/Database/note_model.dart';
 import 'package:to_do_list_app/Helper/NoteCard/note_card.dart';
-// import 'package:to_do_list_app/Helper/helper.dart';
 import 'package:to_do_list_app/Helper/SearchBar/search_bar.dart';
-// import 'package:to_do_list_app/HomeScreen/note_content_page.dart';
 
 class TrashView extends StatefulWidget {
   const TrashView({super.key});
@@ -240,37 +238,6 @@ class _TrashViewState extends State<TrashView> {
     }
   }
 
-  // Widget buildNoteCard(BuildContext context, int noteIndex, NoteModel note) {
-  //   return GestureDetector(
-  //     onLongPress: () {
-  //       setState(() {
-  //         selectedItems[noteIndex] = true;
-  //         handleCardCheckBox(true, noteIndex, note);
-  //       });
-  //     },
-  //     child: Card(
-  //       child: ListTile(
-  //         shape: RoundedRectangleBorder(
-  //           side: BorderSide(color: getRandomColor(), width: 1),
-  //           borderRadius: BorderRadius.circular(5),
-  //         ),
-  //         leading: selectedItems.contains(true)
-  //             ? Checkbox(
-  //                 value: selectedItems[noteIndex],
-  //                 onChanged: (value) {
-  //                   handleCardCheckBox(value, noteIndex, note);
-  //                 },
-  //               )
-  //             : null,
-  //         title: Text(note.notetitle),
-  //         onTap: () {
-  //           navigateToNoteView(context, note);
-  //         },
-  //       ),
-  //     ),
-  //   );
-  // }
-
   void handleCardCheckBox(
       bool? checkBoxSelected, int noteIndex, NoteModel note) {
     setState(() {
@@ -286,13 +253,4 @@ class _TrashViewState extends State<TrashView> {
       }
     });
   }
-
-  // void navigateToNoteView(BuildContext context, NoteModel note) {
-  //   Navigator.push(
-  //     context,
-  //     MaterialPageRoute(
-  //       builder: (context) => NoteContentPage(note: note),
-  //     ),
-  //   );
-  // }
 }
