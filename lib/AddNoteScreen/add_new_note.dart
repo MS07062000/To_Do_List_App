@@ -1,10 +1,10 @@
 import 'dart:convert';
-import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:to_do_list_app/AddNoteScreen/add_remove_userDefined_location.dart';
 import 'package:to_do_list_app/Database/user_defined_location_model.dart';
 import 'package:to_do_list_app/Helper/AddEditNoteComponents/addEditNoteComponents.dart';
+import 'package:to_do_list_app/Helper/helper.dart';
 import 'package:to_do_list_app/Main/bottom_navbar_provider.dart';
 import 'package:to_do_list_app/Database/note_model.dart';
 import 'package:provider/provider.dart';
@@ -58,10 +58,13 @@ class _AddNewNoteViewState extends State<AddNewNoteView> {
 
   //getting list of Locations defined by user and assigning it to userDefinedLocations
   Future<void> setUserDefinedLocation() async {
-    Map<dynamic, dynamic> locationList = await getUserDefinedLocations();
-    setState(() {
-      userDefinedLocations = locationList;
-      log(userDefinedLocations.length.toString());
+    getUserDefinedLocations().then((locationList) {
+      if (locationList.item2) {
+        setState(() {
+          userDefinedLocations = locationList.item1;
+          // log(userDefinedLocations.length.toString());
+        });
+      }
     });
   }
 
@@ -174,7 +177,7 @@ class _AddNewNoteViewState extends State<AddNewNoteView> {
   void handleLocationOperation(String locationOperation) {
     if (locationOperation == 'addLocation') {
       addNewLocation(context, setState, userDefinedLocations).then((value) {
-        log(value.toString());
+        // log(value.toString());
         if (value) {
           setUserDefinedLocation();
         }
@@ -183,7 +186,7 @@ class _AddNewNoteViewState extends State<AddNewNoteView> {
 
     if (locationOperation == 'removeLocation') {
       removeLocation(context, setState, userDefinedLocations).then((value) {
-        log(value.toString());
+        // log(value.toString());
         if (value) {
           setUserDefinedLocation();
         }
@@ -198,54 +201,58 @@ class _AddNewNoteViewState extends State<AddNewNoteView> {
         if (formKey.currentState!.validate()) {
           formKey.currentState!.save();
           if (_destinationController.text.isEmpty) {
-            log(json.decode(_locationInfo).toString());
+            // log(json.decode(_locationInfo).toString());
             _destinationController.text =
                 json.decode(_locationInfo)['locationName']!;
             _destinationCoordinates =
                 json.decode(_locationInfo)['destinationCoordinates']!;
-            log(_destinationCoordinates);
-            log(_destinationController.text.toString());
+            // log(_destinationCoordinates);
+            // log(_destinationController.text.toString());
           }
 
           _submitForm(
-              _destinationController,
-              _destinationCoordinates,
-              _noteTitleController,
-              _noteType,
-              _textNoteController,
-              _checkListController);
-
-          formKey.currentState!.reset();
-
-          Provider.of<BottomNavBarProvider>(context, listen: false)
-              .currentIndex
-              .value = 0;
+                  _destinationController,
+                  _destinationCoordinates,
+                  _noteTitleController,
+                  _noteType,
+                  _textNoteController,
+                  _checkListController)
+              .then((value) {
+            if (value) {
+              formKey.currentState!.reset();
+              Provider.of<BottomNavBarProvider>(context, listen: false)
+                  .currentIndex
+                  .value = 0;
+            } else {
+              dialogOnError(context, "Error in adding new note");
+            }
+          });
         }
       },
     );
   }
 
-  void _submitForm(
+  Future<bool> _submitForm(
       TextEditingController destination,
       String destinationCoordinates,
       TextEditingController noteTitle,
       String noteType,
       TextEditingController textNote,
-      List<TextEditingController> checkList) {
-    _insertNote(destination, destinationCoordinates, noteTitle, noteType,
-        textNote, checkList);
+      List<TextEditingController> checkList) async {
+    return await _insertNote(destination, destinationCoordinates, noteTitle,
+        noteType, textNote, checkList);
   }
 
-  void _insertNote(
+  Future<bool> _insertNote(
       TextEditingController destination,
       String destinationCoordinates,
       TextEditingController noteTitle,
       String noteType,
       TextEditingController textNote,
-      List<TextEditingController> checkList) {
+      List<TextEditingController> checkList) async {
     List<String> checkListNote = extractTextFromControllers(checkList);
     if (noteType == 'CheckList' && checkListNote[0].isNotEmpty) {
-      insertNote(
+      return await insertNote(
         destination: destination.text.toString(),
         destinationCoordinates: destinationCoordinates,
         notetitle: noteTitle.text.toString(),
@@ -254,11 +261,12 @@ class _AddNewNoteViewState extends State<AddNewNoteView> {
     }
 
     if (noteType == 'Text' && textNote.text.toString().isNotEmpty) {
-      insertNote(
+      return await insertNote(
           destination: destination.text.toString(),
           destinationCoordinates: destinationCoordinates,
           notetitle: noteTitle.text.toString(),
           textnote: textNote.text.toString());
     }
+    return false;
   }
 }

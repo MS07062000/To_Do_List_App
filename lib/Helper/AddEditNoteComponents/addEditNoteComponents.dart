@@ -47,7 +47,7 @@ Widget buildMap(TextEditingController destinationController,
     DestinationTapCallBack onDestinationTap) {
   return TextFormField(
     decoration: const InputDecoration(
-      labelText: 'Destination Address',
+      labelText: 'Destination Name',
       suffixIcon: Icon(Icons.map),
       border: OutlineInputBorder(),
     ),
@@ -57,7 +57,7 @@ Widget buildMap(TextEditingController destinationController,
   );
 }
 
-Widget buildMyLocation(Map userDefinedLocations, String locationInfo,
+Widget buildMyLocation(Map userDefinedLocations, dynamic selectedlocation,
     UserDefinedLocationCallBack onUserDefinedLocation) {
   return DropdownButtonFormField<String>(
     decoration: const InputDecoration(
@@ -77,7 +77,7 @@ Widget buildMyLocation(Map userDefinedLocations, String locationInfo,
         ),
       );
     }).toList(),
-    value: locationInfo,
+    value: selectedlocation,
     onChanged: (value) => onUserDefinedLocation(value!),
     validator: (value) {
       if (value == null || value.toString().isEmpty) {

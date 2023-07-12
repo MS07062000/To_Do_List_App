@@ -7,6 +7,7 @@ import 'package:to_do_list_app/Helper/NoteCard/note_card.dart';
 import 'package:to_do_list_app/Helper/helper.dart';
 import 'package:to_do_list_app/Helper/searchBar/search_bar.dart';
 import 'package:to_do_list_app/HomeScreen/edit_note_view.dart';
+import 'package:tuple/tuple.dart';
 // import 'package:to_do_list_app/HomeScreen/note_content_page.dart';
 
 class LocationNoteView extends StatefulWidget {
@@ -41,16 +42,19 @@ class _LocationNoteViewState extends State<LocationNoteView> {
   }
 
   Future<void> getNotes(currentLocation) async {
-    List<NoteModel> notes =
-        await findNotesFromDestination(currentLocation, 10.00, false);
-    if (mounted) {
-      setState(() {
-        fetchedNotes = notes;
-        displayedNotes = fetchedNotes;
-        selectedItems = List.filled(displayedNotes.length, false);
-        isLoading = false;
-      });
-    }
+    findNotesFromDestination(currentLocation, 10.00, false).then((value) {
+      Tuple2<List<NoteModel>, bool> findNotesFromDestinationResult = value;
+      if (findNotesFromDestinationResult.item2 && mounted) {
+        setState(() {
+          fetchedNotes = findNotesFromDestinationResult.item1;
+          displayedNotes = fetchedNotes;
+          selectedItems = List.filled(displayedNotes.length, false);
+          isLoading = false;
+        });
+      } else {
+        dialogOnError(context, "Error in finding Notes from Current Location");
+      }
+    });
   }
 
   void startLocationMonitoring() {
@@ -239,41 +243,6 @@ class _LocationNoteViewState extends State<LocationNoteView> {
     }
   }
 
-  // Widget buildNoteCard(BuildContext context, int noteIndex, NoteModel note) {
-  //   return GestureDetector(
-  //     onLongPress: () {
-  //       handleCardCheckBox(true, noteIndex, note);
-  //     },
-  //     child: Card(
-  //       child: ListTile(
-  //         shape: RoundedRectangleBorder(
-  //           side: BorderSide(color: getRandomColor(), width: 1),
-  //           borderRadius: BorderRadius.circular(5),
-  //         ),
-  //         leading: selectedItems.contains(true)
-  //             ? Checkbox(
-  //                 value: selectedItems[noteIndex],
-  //                 onChanged: (value) {
-  //                   handleCardCheckBox(value, noteIndex, note);
-  //                 },
-  //               )
-  //             : null,
-  //         title: Text(note.notetitle),
-  //         trailing: IconButton(
-  //           icon: const Icon(Icons.edit),
-  //           onPressed: () {
-  //             navigateToNoteEdit(context, note);
-  //           },
-  //         ),
-  //         onTap: () {
-  //           // Handle tap on note card
-  //           navigateToNoteView(context, note);
-  //         },
-  //       ),
-  //     ),
-  //   );
-  // }
-
   void handleCardCheckBox(
       bool? checkBoxSelected, int noteIndex, NoteModel note) {
     setState(() {
@@ -332,6 +301,10 @@ class _LocationNoteViewState extends State<LocationNoteView> {
                   notesKeys = [];
                   startLocationMonitoring();
                   Navigator.of(context).pop();
+
+                  if (!value) {
+                    dialogOnError(context, "Error in Deleting Notes");
+                  }
                 });
               },
             ),

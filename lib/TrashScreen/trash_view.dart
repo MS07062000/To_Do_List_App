@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:to_do_list_app/Database/note_model.dart';
 import 'package:to_do_list_app/Helper/NoteCard/note_card.dart';
 import 'package:to_do_list_app/Helper/SearchBar/search_bar.dart';
+import 'package:to_do_list_app/Helper/helper.dart';
+import 'package:tuple/tuple.dart';
 
 class TrashView extends StatefulWidget {
   const TrashView({super.key});
@@ -31,12 +33,18 @@ class _TrashViewState extends State<TrashView> {
   }
 
   Future<void> getTrashNotes() async {
-    List<NoteModel> notes = await getDeletedNotes();
-    setState(() {
-      fetchedNotes = notes;
-      displayedNotes = fetchedNotes;
-      selectedItems = List.filled(displayedNotes.length, false);
-      isLoading = false;
+    await getDeletedNotes().then((value) {
+      Tuple2<List<NoteModel>, bool> deletedNotesResult = value;
+      if (deletedNotesResult.item2) {
+        setState(() {
+          fetchedNotes = deletedNotesResult.item1;
+          displayedNotes = fetchedNotes;
+          selectedItems = List.filled(displayedNotes.length, false);
+          isLoading = false;
+        });
+      } else {
+        dialogOnError(context, "Error in getting deleted Notes");
+      }
     });
   }
 
@@ -146,7 +154,7 @@ class _TrashViewState extends State<TrashView> {
               child: const Text("Yes"),
               onPressed: () {
                 isReadd ? reAddSelectedItems() : deleteSelectedItems();
-                Navigator.of(context).pop();
+                // Navigator.of(context).pop();
               },
             ),
           ],
@@ -157,6 +165,12 @@ class _TrashViewState extends State<TrashView> {
 
   void reAddSelectedItems() {
     reAddAllSelectedNote(notesKeys).then((value) {
+      Navigator.of(context).pop();
+
+      if (!value) {
+        dialogOnError(context, "Error in Readding Notes");
+      }
+
       setState(() {
         isLoading = true;
       });
@@ -166,12 +180,19 @@ class _TrashViewState extends State<TrashView> {
   }
 
   Future<void> deleteSelectedItems() async {
-    await deleteAllPermanently(notesKeys);
-    setState(() {
-      isLoading = true;
+    deleteAllPermanently(notesKeys).then((value) {
+      Navigator.of(context).pop();
+
+      if (!value) {
+        dialogOnError(context, "Error in Deleting Notes");
+      }
+
+      setState(() {
+        isLoading = true;
+      });
+      notesKeys = [];
+      getTrashNotes();
     });
-    notesKeys = [];
-    getTrashNotes();
   }
 
   Widget selectAllContainer() {

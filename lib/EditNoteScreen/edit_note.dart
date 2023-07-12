@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:to_do_list_app/Database/user_defined_location_model.dart';
 import 'package:to_do_list_app/Database/note_model.dart';
 import 'package:to_do_list_app/Helper/AddEditNoteComponents/addEditNoteComponents.dart';
+import 'package:to_do_list_app/Helper/helper.dart';
 import 'package:to_do_list_app/Map/google_map_view.dart';
 // import 'package:flutter_osm_plugin/flutter_osm_plugin.dart';
 // import 'package:to_do_list_app/Map/osm_map_view.dart';
@@ -73,18 +74,21 @@ class _EditNoteState extends State<EditNote> {
   }
 
   Future<void> _setUserDefinedLocation() async {
-    Map<dynamic, dynamic> locationList = await getUserDefinedLocations();
-    setState(() {
-      userDefinedLocations = locationList;
+    await getUserDefinedLocations().then((locationList) {
+      if (locationList.item2) {
+        setState(() {
+          userDefinedLocations = locationList.item1;
+        });
+      }
     });
   }
 
   void _setLocationInfo(String coordinates) async {
     if (coordinates.isNotEmpty) {
       getLocationInfo(coordinates).then((locationDetails) {
-        if (locationDetails.isNotEmpty) {
+        if (locationDetails.item1.isNotEmpty && locationDetails.item2) {
           setState(() {
-            _locationInfo = jsonEncode(locationDetails);
+            _locationInfo = jsonEncode(locationDetails.item1);
             _destinationController.text = '';
             _destinationType = 'userDefinedLocation';
           });
@@ -194,33 +198,39 @@ class _EditNoteState extends State<EditNote> {
           }
 
           _submitForm(
-              widget.noteKey,
-              _destinationController,
-              _destinationCoordinates,
-              _noteTitleController,
-              _noteType,
-              _textNoteController,
-              _checkListController);
-          formKey.currentState!.reset();
-          Navigator.pop(context);
+                  widget.noteKey,
+                  _destinationController,
+                  _destinationCoordinates,
+                  _noteTitleController,
+                  _noteType,
+                  _textNoteController,
+                  _checkListController)
+              .then((result) {
+            if (result) {
+              formKey.currentState!.reset();
+              Navigator.pop(context);
+            } else {
+              dialogOnError(context, "Error in Updating Notes");
+            }
+          });
         }
       },
     );
   }
 
-  void _submitForm(
+  Future<bool> _submitForm(
       dynamic noteKey,
       TextEditingController destination,
       String destinationCoordinates,
       TextEditingController noteTitle,
       String noteType,
       TextEditingController textNote,
-      List<TextEditingController> checkList) {
-    _updateNote(noteKey, destination, destinationCoordinates, noteTitle,
-        noteType, textNote, checkList);
+      List<TextEditingController> checkList) async {
+    return await _updateNote(noteKey, destination, destinationCoordinates,
+        noteTitle, noteType, textNote, checkList);
   }
 
-  void _updateNote(
+  Future<bool> _updateNote(
     dynamic noteKey,
     TextEditingController destination,
     String destinationCoordinates,
@@ -228,10 +238,10 @@ class _EditNoteState extends State<EditNote> {
     String noteType,
     TextEditingController textNote,
     List<TextEditingController> checkList,
-  ) {
+  ) async {
     List<String> checkListNote = extractTextFromControllers(checkList);
     if (noteType == 'CheckList' && checkListNote[0].isNotEmpty) {
-      updateNote(
+      return await updateNote(
         noteKey: noteKey,
         destination: destination.text.toString(),
         destinationCoordinates: destinationCoordinates,
@@ -243,7 +253,7 @@ class _EditNoteState extends State<EditNote> {
     }
 
     if (noteType == 'Text' && textNote.text.toString().isNotEmpty) {
-      updateNote(
+      return await updateNote(
         noteKey: noteKey,
         destination: destination.text.toString(),
         destinationCoordinates: destinationCoordinates,
@@ -253,5 +263,7 @@ class _EditNoteState extends State<EditNote> {
         isNotified: false,
       );
     }
+
+    return false;
   }
 }

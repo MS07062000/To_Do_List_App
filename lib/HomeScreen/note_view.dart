@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:to_do_list_app/HomeScreen/edit_note_view.dart';
 // import 'package:to_do_list_app/HomeScreen/note_content_page.dart';
 import 'package:to_do_list_app/Database/note_model.dart';
+import 'package:tuple/tuple.dart';
 
 class NoteView extends StatefulWidget {
   const NoteView({super.key});
@@ -38,12 +39,18 @@ class NoteViewState extends State<NoteView> {
   }
 
   Future<void> getNotes() async {
-    List<NoteModel> notes = await getUnreadNotes();
-    setState(() {
-      fetchedNotes = notes;
-      displayedNotes = fetchedNotes;
-      selectedItems = List.filled(displayedNotes.length, false);
-      isLoading = false;
+    await getUnreadNotes().then((value) {
+      Tuple2<List<NoteModel>, bool> unreadNotesResult = value;
+      if (unreadNotesResult.item2) {
+        setState(() {
+          fetchedNotes = unreadNotesResult.item1;
+          displayedNotes = fetchedNotes;
+          selectedItems = List.filled(displayedNotes.length, false);
+          isLoading = false;
+        });
+      } else {
+        dialogOnError(context, "Error in getting Notes");
+      }
     });
   }
 
@@ -275,6 +282,10 @@ class NoteViewState extends State<NoteView> {
                   notesKeys = [];
                   Navigator.of(context).pop();
                   getNotes();
+
+                  if (!value) {
+                    dialogOnError(context, "Error in Deleting Notes");
+                  }
                 });
               },
             ),

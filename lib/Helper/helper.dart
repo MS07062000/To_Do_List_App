@@ -59,3 +59,22 @@ double calculateDistance(double lat1, double lon1, double lat2, double lon2) {
 double _toRadians(double degrees) {
   return degrees * (pi / 180);
 }
+
+void dialogOnError(BuildContext context, String message) {
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        title: Text(message),
+        actions: [
+          TextButton(
+            child: const Text("OK"),
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+          ),
+        ],
+      );
+    },
+  );
+}

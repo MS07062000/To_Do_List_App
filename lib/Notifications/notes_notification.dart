@@ -5,13 +5,17 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:location/location.dart';
 import 'package:to_do_list_app/Database/note_model.dart';
 import 'package:to_do_list_app/Helper/helper.dart';
+import 'package:tuple/tuple.dart';
 
 @pragma('vm:entry-point')
 void onDidReceiveBackgroundNotificationResponse(
     NotificationResponse details) async {
   if (details.payload == 'location_zone') {
-    setNotified(details.id);
-    await FlutterLocalNotificationsPlugin().cancel(details.id ?? -1);
+    setNotified(details.id).then((isNotified) async {
+      if (isNotified) {
+        await FlutterLocalNotificationsPlugin().cancel(details.id ?? -1);
+      }
+    });
   }
 }
 
@@ -58,9 +62,11 @@ class LocationNotificationHelper {
 
   void onDidReceiveNotificationResponse(NotificationResponse details) async {
     if (details.payload == 'location_zone') {
-      setNotified(details.id);
-
-      await flutterLocalNotificationsPlugin.cancel(details.id ?? -1);
+      setNotified(details.id).then((isNotified) async {
+        if (isNotified) {
+          await FlutterLocalNotificationsPlugin().cancel(details.id ?? -1);
+        }
+      });
     }
   }
 
@@ -129,12 +135,15 @@ class LocationNotificationHelper {
   }
 
   void checkLocationZoneAndNotifyNotes(LocationData currentPosition) async {
-    List<NoteModel> notes =
-        await findNotesFromDestination(currentPosition, 10.00, true);
-    for (NoteModel note in notes) {
-      showNotification(note);
-      setNotified(note.key);
-    }
+    findNotesFromDestination(currentPosition, 10.00, true).then((value) {
+      Tuple2<List<NoteModel>, bool> findNotesFromDestinationResult = value;
+      if (findNotesFromDestinationResult.item2) {
+        for (NoteModel note in findNotesFromDestinationResult.item1) {
+          showNotification(note);
+          setNotified(note.key);
+        }
+      }
+    });
   }
 
   void showNotification(NoteModel note) async {

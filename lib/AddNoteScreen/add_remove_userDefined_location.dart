@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:to_do_list_app/Database/user_defined_location_model.dart';
+import 'package:to_do_list_app/Helper/helper.dart';
 import 'package:to_do_list_app/Map/google_map_view.dart';
 
 typedef SetStateCallBack = void Function(Function());
@@ -93,10 +94,14 @@ Future<bool> addNewLocation(BuildContext context, SetStateCallBack setState,
                   addLocation(userDefinedNameforLocation, locationName,
                           locationCoordinates)
                       .then((value) {
-                    formKey.currentState!.reset();
-                    // Close the alert dialog
-                    Navigator.of(context).pop();
-                    completer.complete(true);
+                    if (value) {
+                      formKey.currentState!.reset();
+                      // Close the alert dialog
+                      Navigator.of(context).pop();
+                      completer.complete(true);
+                    } else {
+                      dialogOnError(context, "Error in adding Location");
+                    }
                   });
                 }
               },
@@ -168,9 +173,13 @@ Future<bool> removeLocation(BuildContext context, SetStateCallBack setState,
                   // Perform the delete operation here
                   // Delete the selected location from the database
                   deleteLocation(selectedLocation!).then((value) {
-                    formKey.currentState!.reset();
-                    Navigator.of(context).pop();
-                    completer.complete(true);
+                    if (value) {
+                      formKey.currentState!.reset();
+                      Navigator.of(context).pop();
+                      completer.complete(true);
+                    } else {
+                      dialogOnError(context, "Error in deleting Location");
+                    }
                   });
                   // Close the alert dialog
                 }
