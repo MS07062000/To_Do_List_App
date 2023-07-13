@@ -35,13 +35,13 @@ class NoteContentPage extends StatelessWidget {
   }
 
   Widget buildNoteContent(parentScrollController) {
-    if (note.textnote != null) {
+    if (note.textnote!.isNotEmpty) {
       // Single string note
       return Padding(
         padding: const EdgeInsets.all(8.0),
         child: Text(note.textnote!),
       );
-    } else if (note.checklist != null) {
+    } else if (note.checklist!.isNotEmpty) {
       // Array of notes
       return ListView.builder(
         controller: parentScrollController,

@@ -20,8 +20,8 @@ class NoteModelAdapter extends TypeAdapter<NoteModel> {
       destination: fields[0] as String,
       destinationCoordinates: fields[1] as String,
       notetitle: fields[2] as String,
-      textnote: fields[3] as String?,
-      checklist: (fields[4] as List?)?.cast<String>(),
+      textnote: fields[3] == null ? '' : fields[3] as String?,
+      checklist: fields[4] == null ? [] : (fields[4] as List?)?.cast<String>(),
       isDelete: fields[5] as bool,
       isNotified: fields[6] as bool,
     );

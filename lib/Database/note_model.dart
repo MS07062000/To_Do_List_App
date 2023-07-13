@@ -18,10 +18,10 @@ class NoteModel extends HiveObject {
   @HiveField(2)
   late String notetitle;
 
-  @HiveField(3)
+  @HiveField(3, defaultValue: '')
   String? textnote;
 
-  @HiveField(4)
+  @HiveField(4, defaultValue: [])
   List<String>? checklist;
 
   @HiveField(5)
@@ -130,8 +130,8 @@ Future<bool> updateNote({
   required String notetitle,
   String? textnote,
   List<String>? checklist,
-  bool? isDelete,
-  bool? isNotified,
+  required bool isDelete,
+  required bool isNotified,
 }) async {
   try {
     await initializeHive();
@@ -143,8 +143,8 @@ Future<bool> updateNote({
         notetitle: notetitle,
         textnote: textnote,
         checklist: checklist,
-        isDelete: isDelete ?? false,
-        isNotified: isNotified ?? false);
+        isDelete: isDelete,
+        isNotified: isNotified);
     // log("update");
     // log('${noteBox.keys.length}');
     // log('${noteKey}');
