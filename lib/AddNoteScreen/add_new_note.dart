@@ -251,7 +251,7 @@ class _AddNewNoteViewState extends State<AddNewNoteView> {
       TextEditingController textNote,
       List<TextEditingController> checkList) async {
     List<String> checkListNote = extractTextFromControllers(checkList);
-    if (noteType == 'CheckList' && checkListNote[0].isNotEmpty) {
+    if (noteType == 'CheckList' && checkListNote.isNotEmpty) {
       return await insertNote(
         destination: destination.text.toString(),
         destinationCoordinates: destinationCoordinates,

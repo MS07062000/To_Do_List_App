@@ -188,11 +188,11 @@ class LocationNotificationHelper {
   }
 
   String? notificationBody(NoteModel note) {
-    if (note.textnote != null) {
+    if (note.textnote != null && note.textnote!.isNotEmpty) {
       return note.textnote;
     }
 
-    if (note.checklist!.isNotEmpty) {
+    if (note.checklist != null && note.checklist!.isNotEmpty) {
       return note.checklist!.join("\n");
     }
     return null;

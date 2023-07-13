@@ -41,7 +41,7 @@ class NoteModel extends HiveObject {
   });
 
   factory NoteModel.fromJson(Map<String, dynamic> note) {
-    if (note.keys.contains('textnote')) {
+    if (note['textnote'] != '') {
       return NoteModel(
         destination: note['destination'],
         destinationCoordinates: note['destinationCoordinates'],
