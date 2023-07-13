@@ -1,10 +1,13 @@
 import 'dart:async';
+import 'dart:convert';
 // import 'dart:developer';
 import 'dart:typed_data';
+import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:location/location.dart';
 import 'package:to_do_list_app/Database/note_model.dart';
 import 'package:to_do_list_app/Helper/helper.dart';
+import 'package:to_do_list_app/HomeScreen/note_content_page.dart';
 import 'package:tuple/tuple.dart';
 
 @pragma('vm:entry-point')
@@ -27,8 +30,10 @@ class LocationNotificationHelper {
   String notificationChannelDescription =
       'Notifications for location-based notes';
   StreamSubscription<LocationData>? locationStreamSubscription;
+  late BuildContext notificationContext;
 
-  LocationNotificationHelper() {
+  LocationNotificationHelper(BuildContext context) {
+    notificationContext = context;
     initializeNotifications();
   }
 
@@ -61,13 +66,24 @@ class LocationNotificationHelper {
   }
 
   void onDidReceiveNotificationResponse(NotificationResponse details) async {
-    if (details.payload == 'location_zone') {
+    if (details.payload != '') {
       setNotified(details.id).then((isNotified) async {
+        NoteModel note = NoteModel.fromJson(json.decode(details.payload!));
         if (isNotified) {
+          navigateToNoteView(notificationContext, note);
           await FlutterLocalNotificationsPlugin().cancel(details.id ?? -1);
         }
       });
     }
+  }
+
+  void navigateToNoteView(BuildContext context, NoteModel note) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => NoteContentPage(note: note),
+      ),
+    );
   }
 
   void startLocationMonitoring() {
@@ -135,7 +151,7 @@ class LocationNotificationHelper {
   }
 
   void checkLocationZoneAndNotifyNotes(LocationData currentPosition) async {
-    findNotesFromDestination(currentPosition, 10.00, true).then((value) {
+    findNotesFromDestination(currentPosition, 50.00, true).then((value) {
       Tuple2<List<NoteModel>, bool> findNotesFromDestinationResult = value;
       if (findNotesFromDestinationResult.item2) {
         for (NoteModel note in findNotesFromDestinationResult.item1) {
@@ -161,12 +177,13 @@ class LocationNotificationHelper {
     NotificationDetails platformChannelSpecifics =
         NotificationDetails(android: androidPlatformChannelSpecifics);
 
+    // log(note.toJson().toString());
     await flutterLocalNotificationsPlugin.show(
       note.key,
       note.notetitle,
       notificationBody(note),
       platformChannelSpecifics,
-      payload: 'location_zone',
+      payload: json.encode(note.toJson()),
     );
   }
 

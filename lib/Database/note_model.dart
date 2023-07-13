@@ -1,4 +1,4 @@
-// import 'dart:developer';
+import 'dart:developer';
 import 'package:hive_flutter/adapters.dart';
 import 'package:location/location.dart';
 import 'package:path_provider/path_provider.dart' as path_provider;
@@ -39,6 +39,44 @@ class NoteModel extends HiveObject {
     required this.isDelete,
     required this.isNotified,
   });
+
+  factory NoteModel.fromJson(Map<String, dynamic> note) {
+    if (note.keys.contains('textnote')) {
+      return NoteModel(
+        destination: note['destination'],
+        destinationCoordinates: note['destinationCoordinates'],
+        notetitle: note['notetitle'],
+        textnote: note['textnote'],
+        isDelete: note['isDelete'],
+        isNotified: note['isNotified'],
+      );
+    }
+
+    return NoteModel(
+      destination: note['destination'],
+      destinationCoordinates: note['destinationCoordinates'],
+      notetitle: note['notetitle'],
+      checklist: List<String>.from(note['checklist']),
+      isDelete: note['isDelete'],
+      isNotified: note['isNotified'],
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    final Map<String, dynamic> note = {};
+    note['destination'] = destination;
+    note['destinationCoordinates'] = destinationCoordinates;
+    note['notetitle'] = notetitle;
+    if (textnote != null) {
+      note['textnote'] = textnote;
+    }
+    if (checklist != null) {
+      note['checklist'] = checklist;
+    }
+    note['isDelete'] = isDelete;
+    note['isNotified'] = isNotified;
+    return note;
+  }
 }
 
 Future<void> initializeHive() async {
@@ -255,6 +293,7 @@ Future<Tuple2<List<NoteModel>, bool>> findNotesFromDestination(
         noteLongitude,
       );
 
+      log(distanceInMeters.toString());
       // Filter the notes within the maximum distance
       if (isUsedForNotification) {
         return distanceInMeters <= maxDistance &&

@@ -24,11 +24,11 @@ class _MyHomePageState extends State<MyHomePage> {
   ];
 
   ConnectivityCheck connectivityCheck = ConnectivityCheck();
-  LocationNotificationHelper locationNotificationHelper =
-      LocationNotificationHelper();
+  late LocationNotificationHelper locationNotificationHelper;
 
   @override
   void initState() {
+    locationNotificationHelper = LocationNotificationHelper(context);
     super.initState();
     connectivityCheck.startStreamSubscription(context);
   }
