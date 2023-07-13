@@ -240,7 +240,7 @@ class _EditNoteState extends State<EditNote> {
     List<TextEditingController> checkList,
   ) async {
     List<String> checkListNote = extractTextFromControllers(checkList);
-    if (noteType == 'CheckList' && checkListNote[0].isNotEmpty) {
+    if (noteType == 'CheckList' && checkListNote.isNotEmpty) {
       return await updateNote(
         noteKey: noteKey,
         destination: destination.text.toString(),
