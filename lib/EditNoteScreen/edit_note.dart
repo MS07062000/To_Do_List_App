@@ -43,11 +43,11 @@ class _EditNoteState extends State<EditNote> {
     _setLocationInfo(widget.note.destinationCoordinates);
 
     _noteTitleController.text = widget.note.notetitle;
-    if (widget.note.textnote!.isNotEmpty) {
+    if (widget.note.textnote != null && widget.note.textnote!.isNotEmpty) {
       _textNoteController.text = widget.note.textnote!;
     }
 
-    if (widget.note.checklist!.isNotEmpty) {
+    if (widget.note.checklist != null && widget.note.checklist!.isNotEmpty) {
       _checklistItems.addAll(widget.note.checklist!);
       _checkListController.addAll(List.generate(
         widget.note.checklist!.length,
