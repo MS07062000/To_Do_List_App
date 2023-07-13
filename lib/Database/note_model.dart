@@ -1,4 +1,4 @@
-import 'dart:developer';
+// import 'dart:developer';
 import 'package:hive_flutter/adapters.dart';
 import 'package:location/location.dart';
 import 'package:path_provider/path_provider.dart' as path_provider;
@@ -293,7 +293,7 @@ Future<Tuple2<List<NoteModel>, bool>> findNotesFromDestination(
         noteLongitude,
       );
 
-      log(distanceInMeters.toString());
+      //log(distanceInMeters.toString());
       // Filter the notes within the maximum distance
       if (isUsedForNotification) {
         return distanceInMeters <= maxDistance &&

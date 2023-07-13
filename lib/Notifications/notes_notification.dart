@@ -151,7 +151,7 @@ class LocationNotificationHelper {
   }
 
   void checkLocationZoneAndNotifyNotes(LocationData currentPosition) async {
-    findNotesFromDestination(currentPosition, 50.00, true).then((value) {
+    findNotesFromDestination(currentPosition, 10.00, true).then((value) {
       Tuple2<List<NoteModel>, bool> findNotesFromDestinationResult = value;
       if (findNotesFromDestinationResult.item2) {
         for (NoteModel note in findNotesFromDestinationResult.item1) {
