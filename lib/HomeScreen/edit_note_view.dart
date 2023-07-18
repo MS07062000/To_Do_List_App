@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:to_do_list_app/AddNoteScreen/add_new_note_view.dart';
-
+import 'package:to_do_list_app/EditNoteScreen/edit_note.dart';
 import '../Database/note_model.dart';
 
 class EditNoteView extends StatelessWidget {
@@ -15,6 +14,6 @@ class EditNoteView extends StatelessWidget {
         appBar: AppBar(
           title: Text(note.notetitle),
         ),
-        body: AddNewNoteView(noteKey: noteKey, note: note));
+        body: EditNote(noteKey: noteKey, note: note));
   }
 }

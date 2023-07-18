@@ -1,16 +1,20 @@
-# to_do_list_app
+## Project Configuration
 
-A new Flutter project.
+### 1. Add Google Maps API Key in `android/local.properties`
 
-## Getting Started
+To avoid errors in the `AndroidManifest.xml` file, you need to add your Google Maps API key to the `android/local.properties` file. Follow these steps:
 
-This project is a starting point for a Flutter application.
+1. Open the `android/local.properties` file in your project.
+2. Add a new line with the following content: `googleMapApiKey=yourApiKey`, replacing `yourApiKey` with your actual Google Maps API key.
+3. Save the file.
 
-A few resources to get you started if this is your first Flutter project:
+### 2. Update `lib/Map/google_map_view.dart`
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+The `google_map_view.dart` file contains the configuration for the `PlacePicker` widget. Follow these steps to update it:
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+1. Open the `lib/Map/google_map_view.dart` file in your project.
+2. Locate the `PlacePicker` widget.
+3. Update the value of the `apiKey` parameter with your actual Google Maps API key. It should look like `PlacePicker(apiKey: 'yourApiKey')`.
+4. Save the file.
+
+Make sure to replace `yourApiKey` with your actual Google Maps API key in both configurations.
