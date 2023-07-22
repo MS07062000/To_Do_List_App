@@ -18,3 +18,6 @@ The `google_map_view.dart` file contains the configuration for the `PlacePicker`
 4. Save the file.
 
 Make sure to replace `yourApiKey` with your actual Google Maps API key in both configurations.
+
+### 3. Update `ios/Runner/AppDelegate.swift`
+Replace "YOUR KEY HERE" with Google Maps API key.
