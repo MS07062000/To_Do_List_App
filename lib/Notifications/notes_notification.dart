@@ -40,15 +40,50 @@ class LocationNotificationHelper {
   void initializeNotifications() async {
     await flutterLocalNotificationsPlugin
         .resolvePlatformSpecificImplementation<
+            IOSFlutterLocalNotificationsPlugin>()!
+        .requestPermissions()
+        .then((isPermissionGranted) async {
+      if (isPermissionGranted!) {
+        final DarwinInitializationSettings initializationSettingsDarwin =
+            DarwinInitializationSettings(onDidReceiveLocalNotification:
+                (int id, String? title, String? body, String? payload) {
+          onDidReceiveIOSNotificationResponse(id, payload!);
+        });
+
+        InitializationSettings initializationSettings =
+            InitializationSettings(iOS: initializationSettingsDarwin);
+        await flutterLocalNotificationsPlugin
+            .initialize(initializationSettings,
+                onDidReceiveBackgroundNotificationResponse:
+                    onDidReceiveBackgroundNotificationResponse,
+                onDidReceiveNotificationResponse:
+                    onDidReceiveNotificationResponse)
+            .then((isInitialized) {
+          if (isInitialized!) {
+            // Future.delayed(const Duration(seconds: 5), startLocationMonitoring);
+            startLocationMonitoring();
+          }
+        });
+      }
+    });
+
+    await flutterLocalNotificationsPlugin
+        .resolvePlatformSpecificImplementation<
             AndroidFlutterLocalNotificationsPlugin>()!
         .requestPermission()
         .then((isPermissionGranted) async {
       if (isPermissionGranted!) {
         const AndroidInitializationSettings initializationSettingsAndroid =
             AndroidInitializationSettings('launch_background');
-        InitializationSettings initializationSettings =
-            const InitializationSettings(
-                android: initializationSettingsAndroid);
+        final DarwinInitializationSettings initializationSettingsDarwin =
+            DarwinInitializationSettings(onDidReceiveLocalNotification:
+                (int id, String? title, String? body, String? payload) {
+          onDidReceiveIOSNotificationResponse(id, payload!);
+        });
+
+        InitializationSettings initializationSettings = InitializationSettings(
+            android: initializationSettingsAndroid,
+            iOS: initializationSettingsDarwin);
         await flutterLocalNotificationsPlugin
             .initialize(initializationSettings,
                 onDidReceiveBackgroundNotificationResponse:
@@ -72,6 +107,18 @@ class LocationNotificationHelper {
         if (isNotified) {
           navigateToNoteView(notificationContext, note);
           await FlutterLocalNotificationsPlugin().cancel(details.id ?? -1);
+        }
+      });
+    }
+  }
+
+  void onDidReceiveIOSNotificationResponse(int id, String payload) async {
+    if (payload != '') {
+      setNotified(id).then((isNotified) async {
+        NoteModel note = NoteModel.fromJson(json.decode(payload));
+        if (isNotified) {
+          navigateToNoteView(notificationContext, note);
+          await FlutterLocalNotificationsPlugin().cancel(id);
         }
       });
     }
@@ -174,8 +221,20 @@ class LocationNotificationHelper {
             styleInformation: BigTextStyleInformation(notificationBody(note)!,
                 contentTitle: note.notetitle));
 
-    NotificationDetails platformChannelSpecifics =
-        NotificationDetails(android: androidPlatformChannelSpecifics);
+    DarwinNotificationDetails iosPlatformChannelSpecifics =
+        DarwinNotificationDetails(
+      presentAlert: true, // to show alert
+      presentBadge: false, // to update the app's badge count
+      presentSound: false, // to play a sound
+      threadIdentifier: DateTime.now()
+          .millisecondsSinceEpoch
+          .toString(), // to group notifications
+      interruptionLevel: InterruptionLevel.critical,
+    );
+
+    NotificationDetails platformChannelSpecifics = NotificationDetails(
+        android: androidPlatformChannelSpecifics,
+        iOS: iosPlatformChannelSpecifics);
 
     // log(note.toJson().toString());
     await flutterLocalNotificationsPlugin.show(
