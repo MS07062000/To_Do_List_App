@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 // import 'dart:developer';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
@@ -38,66 +39,71 @@ class LocationNotificationHelper {
   }
 
   void initializeNotifications() async {
-    await flutterLocalNotificationsPlugin
-        .resolvePlatformSpecificImplementation<
-            IOSFlutterLocalNotificationsPlugin>()!
-        .requestPermissions()
-        .then((isPermissionGranted) async {
-      if (isPermissionGranted!) {
-        final DarwinInitializationSettings initializationSettingsDarwin =
-            DarwinInitializationSettings(onDidReceiveLocalNotification:
-                (int id, String? title, String? body, String? payload) {
-          onDidReceiveIOSNotificationResponse(id, payload!);
-        });
+    if (Platform.isIOS) {
+      await flutterLocalNotificationsPlugin
+          .resolvePlatformSpecificImplementation<
+              IOSFlutterLocalNotificationsPlugin>()!
+          .requestPermissions()
+          .then((isPermissionGranted) async {
+        if (isPermissionGranted!) {
+          final DarwinInitializationSettings initializationSettingsDarwin =
+              DarwinInitializationSettings(onDidReceiveLocalNotification:
+                  (int id, String? title, String? body, String? payload) {
+            onDidReceiveIOSNotificationResponse(id, payload!);
+          });
 
-        InitializationSettings initializationSettings =
-            InitializationSettings(iOS: initializationSettingsDarwin);
-        await flutterLocalNotificationsPlugin
-            .initialize(initializationSettings,
-                onDidReceiveBackgroundNotificationResponse:
-                    onDidReceiveBackgroundNotificationResponse,
-                onDidReceiveNotificationResponse:
-                    onDidReceiveNotificationResponse)
-            .then((isInitialized) {
-          if (isInitialized!) {
-            // Future.delayed(const Duration(seconds: 5), startLocationMonitoring);
-            startLocationMonitoring();
-          }
-        });
-      }
-    });
+          InitializationSettings initializationSettings =
+              InitializationSettings(iOS: initializationSettingsDarwin);
+          await flutterLocalNotificationsPlugin
+              .initialize(initializationSettings,
+                  onDidReceiveBackgroundNotificationResponse:
+                      onDidReceiveBackgroundNotificationResponse,
+                  onDidReceiveNotificationResponse:
+                      onDidReceiveNotificationResponse)
+              .then((isInitialized) {
+            if (isInitialized!) {
+              // Future.delayed(const Duration(seconds: 5), startLocationMonitoring);
+              startLocationMonitoring();
+            }
+          });
+        }
+      });
+    }
 
-    await flutterLocalNotificationsPlugin
-        .resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>()!
-        .requestPermission()
-        .then((isPermissionGranted) async {
-      if (isPermissionGranted!) {
-        const AndroidInitializationSettings initializationSettingsAndroid =
-            AndroidInitializationSettings('launch_background');
-        final DarwinInitializationSettings initializationSettingsDarwin =
-            DarwinInitializationSettings(onDidReceiveLocalNotification:
-                (int id, String? title, String? body, String? payload) {
-          onDidReceiveIOSNotificationResponse(id, payload!);
-        });
+    if (Platform.isAndroid) {
+      await flutterLocalNotificationsPlugin
+          .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin>()!
+          .requestPermission()
+          .then((isPermissionGranted) async {
+        if (isPermissionGranted!) {
+          const AndroidInitializationSettings initializationSettingsAndroid =
+              AndroidInitializationSettings('launch_background');
+          final DarwinInitializationSettings initializationSettingsDarwin =
+              DarwinInitializationSettings(onDidReceiveLocalNotification:
+                  (int id, String? title, String? body, String? payload) {
+            onDidReceiveIOSNotificationResponse(id, payload!);
+          });
 
-        InitializationSettings initializationSettings = InitializationSettings(
-            android: initializationSettingsAndroid,
-            iOS: initializationSettingsDarwin);
-        await flutterLocalNotificationsPlugin
-            .initialize(initializationSettings,
-                onDidReceiveBackgroundNotificationResponse:
-                    onDidReceiveBackgroundNotificationResponse,
-                onDidReceiveNotificationResponse:
-                    onDidReceiveNotificationResponse)
-            .then((isInitialized) {
-          if (isInitialized!) {
-            // Future.delayed(const Duration(seconds: 5), startLocationMonitoring);
-            startLocationMonitoring();
-          }
-        });
-      }
-    });
+          InitializationSettings initializationSettings =
+              InitializationSettings(
+                  android: initializationSettingsAndroid,
+                  iOS: initializationSettingsDarwin);
+          await flutterLocalNotificationsPlugin
+              .initialize(initializationSettings,
+                  onDidReceiveBackgroundNotificationResponse:
+                      onDidReceiveBackgroundNotificationResponse,
+                  onDidReceiveNotificationResponse:
+                      onDidReceiveNotificationResponse)
+              .then((isInitialized) {
+            if (isInitialized!) {
+              // Future.delayed(const Duration(seconds: 5), startLocationMonitoring);
+              startLocationMonitoring();
+            }
+          });
+        }
+      });
+    }
   }
 
   void onDidReceiveNotificationResponse(NotificationResponse details) async {
