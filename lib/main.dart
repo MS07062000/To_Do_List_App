@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 // import 'package:to_do_list_app/LocationNotesScreen/get_current_location.dart';
 import 'package:to_do_list_app/Main/home_page.dart';
+// import 'package:to_do_list_app/Notifications/notification_by_background_locator_2.dart';
 // import 'package:to_do_list_app/Notifications/background_work_manager.dart';
-import 'package:to_do_list_app/Notifications/background_services.dart';
+// import 'package:to_do_list_app/Notifications/background_services.dart';
 
 Future main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  BackgroundServices();
+  // BackgroundLocationFetch();
+  // BackgroundServices();
   // BackgroundWorkManager();
   runApp(const MyApp());
 }
@@ -27,7 +29,6 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      debugShowCheckedModeBanner: false,
       title: 'Note App',
       theme: ThemeData(
         primarySwatch: Colors.blue,

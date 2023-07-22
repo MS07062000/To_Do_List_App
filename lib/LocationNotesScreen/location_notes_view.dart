@@ -1,12 +1,15 @@
 import 'dart:async';
+import 'dart:developer';
 import 'package:flutter/material.dart';
-import 'package:geolocator/geolocator.dart';
+// import 'package:geolocator/geolocator.dart';
+import 'package:location/location.dart';
 // import 'package:provider/provider.dart';
 import 'package:to_do_list_app/Database/note_model.dart';
 import 'package:to_do_list_app/Helper/helper.dart';
+import 'package:to_do_list_app/Helper/location_handler.dart';
 import 'package:to_do_list_app/HomeScreen/edit_note_view.dart';
 import 'package:to_do_list_app/HomeScreen/note_content_page.dart';
-import 'package:to_do_list_app/LocationNotesScreen/get_current_location.dart';
+// import 'package:to_do_list_app/LocationNotesScreen/get_current_location.dart';
 // import 'package:to_do_list_app/Main/bottom_navbar_provider.dart';
 
 class LocationNoteView extends StatefulWidget {
@@ -21,16 +24,26 @@ class _LocationNoteViewState extends State<LocationNoteView> {
   bool isNotesAvailable = false;
   List<bool> selectedItems = [];
   List<dynamic> notesKeys = [];
-  Position currentLocationValue = Position(
-    latitude: -180.0,
-    longitude: -180.0,
-    accuracy: 0.0,
-    altitude: 0.0,
-    heading: 0.0,
-    speed: 0.0,
-    speedAccuracy: 0.0,
-    timestamp: DateTime.now(),
-  );
+  // Position currentLocationValue = Position(
+  //   latitude: -180.0,
+  //   longitude: -180.0,
+  //   accuracy: 0.0,
+  //   altitude: 0.0,
+  //   heading: 0.0,
+  //   speed: 0.0,
+  //   speedAccuracy: 0.0,
+  //   timestamp: DateTime.now(),
+  // );
+  LocationData currentLocationValue = LocationData.fromMap({
+    "latitude": -180.0,
+    "longitude": -180.0,
+    "accuracy": 0.0,
+    "altitude": 0.0,
+    "heading": 0.0,
+    "speed": 0.0,
+    "speedAccuracy": 0.0,
+    "timestamp": DateTime.now(),
+  });
 
   // ValueNotifier<List<NoteModel>> notesNotifier =
   //     ValueNotifier<List<NoteModel>>([]);
@@ -38,7 +51,7 @@ class _LocationNoteViewState extends State<LocationNoteView> {
   List<NoteModel> displayedNotes = [];
   TextEditingController searchController = TextEditingController();
   List<NoteModel> filteredNotes = [];
-  StreamSubscription<Position>? _positionStreamSubscription;
+  StreamSubscription<LocationData>? _positionStreamSubscription;
 
   @override
   void initState() {
@@ -88,6 +101,8 @@ class _LocationNoteViewState extends State<LocationNoteView> {
         await findNotesFromDestination(currentLocation, 50.00, false);
     if (mounted) {
       setState(() {
+        log("INSIDE LOCATION");
+        log(notes.length.toString());
         fetchedNotes = notes;
         displayedNotes = fetchedNotes;
         selectedItems = List.filled(displayedNotes.length, false);
@@ -96,15 +111,32 @@ class _LocationNoteViewState extends State<LocationNoteView> {
   }
 
   void startLocationMonitoring() {
-    const locationSettings = LocationSettings(
-        accuracy: LocationAccuracy.best, timeLimit: Duration(minutes: 2));
-    _positionStreamSubscription =
-        Geolocator.getPositionStream(locationSettings: locationSettings).listen(
-            (Position position) {
-      currentLocationValue = position;
-      notesKeys = [];
-      getNotes(currentLocationValue);
-    }, onError: (error) => {startLocationMonitoring()});
+    // _positionStreamSubscription?.cancel();
+    // const locationSettings = LocationSettings(
+    //     accuracy: LocationAccuracy.best, timeLimit: Duration(seconds: 30));
+    // _positionStreamSubscription =
+    //     Geolocator.getPositionStream(locationSettings: locationSettings).listen(
+    //         (Position position) {
+    //   currentLocationValue = position;
+    //   notesKeys = [];
+    //   getNotes(currentLocationValue);
+    // }, onError: (error) {
+    //   startLocationMonitoring();
+    // });
+    _positionStreamSubscription?.cancel();
+    Location().changeSettings(interval: 30000).then((isSettingsChanged) {
+      if (isSettingsChanged) {
+        locationPermissionAndServicesEnabled().then((isEnabled) => {
+              _positionStreamSubscription = Location()
+                  .onLocationChanged
+                  .listen((LocationData location) async {
+                log('${location.latitude},${location.longitude}');
+                log(DateTime.timestamp().toString());
+                await getNotes(location);
+              })
+            });
+      }
+    });
   }
 
   void sortByNoteTitle() {
@@ -124,15 +156,6 @@ class _LocationNoteViewState extends State<LocationNoteView> {
       }
       // Provider.of<BottomNavBarProvider>(context, listen: false)
       //     .setNotesKeys(notesKeys);
-    });
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    getCurrentLocation(context).then((location) {
-      currentLocationValue = location;
-      getNotes(currentLocationValue);
     });
   }
 
@@ -166,130 +189,128 @@ class _LocationNoteViewState extends State<LocationNoteView> {
       body: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          if (currentLocationValue.latitude == -180.0 &&
-              currentLocationValue.longitude == -180.0) ...[
-            const Center(child: CircularProgressIndicator())
-          ] else if (currentLocationValue.latitude == 0.0 &&
-              currentLocationValue.longitude == 0.0) ...[
-            AlertDialog(
-              title: const Text('Location Services Or Permissions Disabled'),
-              content: const Text(
-                  'Please enable both location services and permissions to use this feature.'),
-              actions: [
-                TextButton(
-                  child: const Text('Open Settings'),
-                  onPressed: () {
-                    // Open device settings
-                    Geolocator.openAppSettings();
-                    Navigator.of(context).pop();
-                  },
-                ),
-              ],
-            )
-          ] else ...[
-            Flexible(
-              // Replace Expanded with Flexible
-              fit: FlexFit.loose, // Set fit to FlexFit.loose
-              child: Column(
-                children: [
-                  if (fetchedNotes.isNotEmpty) ...[
-                    //notesNotifier.value
+          // if (currentLocationValue.latitude == -180.0 &&
+          //     currentLocationValue.longitude == -180.0) ...[
+          //   const Center(child: CircularProgressIndicator())
+          // ] else if (currentLocationValue.latitude == 0.0 &&
+          //     currentLocationValue.longitude == 0.0) ...[
+          //   AlertDialog(
+          //     title: const Text('Location Services Or Permissions Disabled'),
+          //     content: const Text(
+          //         'Please enable both location services and permissions to use this feature.'),
+          //     actions: [
+          //       TextButton(
+          //         child: const Text('Open Settings'),
+          //         onPressed: () {
+          //           // Open device settings
+          //           Geolocator.openLocationSettings();
+          //           Navigator.of(context).pop();
+          //         },
+          //       ),
+          //     ],
+          //   )
+          // ] else ...[
+          Flexible(
+            // Replace Expanded with Flexible
+            fit: FlexFit.loose, // Set fit to FlexFit.loose
+            child: Column(
+              children: [
+                if (fetchedNotes.isNotEmpty) ...[
+                  //notesNotifier.value
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Padding(
+                          padding:
+                              const EdgeInsets.fromLTRB(10.0, 5.0, 10.0, 5.0),
+                          child: TextField(
+                            controller: searchController,
+                            onChanged: (value) {
+                              setState(() {
+                                filteredNotes =
+                                    displayedNotes //notesNotifier.value
+                                        .where((note) => note.notetitle
+                                            .toLowerCase()
+                                            .contains(value.toLowerCase()))
+                                        .toList();
+                              });
+                            },
+                            decoration: const InputDecoration(
+                              labelText: 'Search Notes',
+                              border: OutlineInputBorder(),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (selectedItems.contains(true))
                     Row(
                       children: [
                         Expanded(
                           child: Padding(
                             padding:
                                 const EdgeInsets.fromLTRB(10.0, 5.0, 10.0, 5.0),
-                            child: TextField(
-                              controller: searchController,
+                            child: CheckboxListTile(
+                              controlAffinity: ListTileControlAffinity.leading,
+                              title: const Text('Select All'),
+                              value: selectedItems
+                                  .every((isSelected) => isSelected),
                               onChanged: (value) {
-                                setState(() {
-                                  filteredNotes =
-                                      displayedNotes //notesNotifier.value
-                                          .where((note) => note.notetitle
-                                              .toLowerCase()
-                                              .contains(value.toLowerCase()))
-                                          .toList();
-                                });
+                                handleSelectAllChange(value!);
                               },
-                              decoration: const InputDecoration(
-                                labelText: 'Search Notes',
-                                border: OutlineInputBorder(),
-                              ),
                             ),
                           ),
                         ),
                       ],
                     ),
-                    if (selectedItems.contains(true))
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Padding(
-                              padding: const EdgeInsets.fromLTRB(
-                                  10.0, 5.0, 10.0, 5.0),
-                              child: CheckboxListTile(
-                                controlAffinity:
-                                    ListTileControlAffinity.leading,
-                                title: const Text('Select All'),
-                                value: selectedItems
-                                    .every((isSelected) => isSelected),
-                                onChanged: (value) {
-                                  handleSelectAllChange(value!);
-                                },
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                  ],
-                  if (searchController.text.isNotEmpty &&
-                      filteredNotes.isEmpty) ...[
-                    const Expanded(
-                        child: Center(
-                      child: Text(
-                        'No notes found as per the input entered by you.',
-                      ),
-                    ))
-                  ] else if (displayedNotes.isEmpty) ...[
-                    const Expanded(
-                        child: Center(
-                      child: Text("No Notes"),
-                    ))
-                  ] else ...[
-                    Expanded(
-                      child: RefreshIndicator(
-                        onRefresh: () {
-                          return Future.delayed(const Duration(seconds: 1), () {
-                            // didChangeDependencies();
-                            getNotes(currentLocationValue);
-                          });
-                        },
-                        child: ListView.builder(
-                          itemCount: displayedNotes.length,
-                          itemBuilder: (context, index) {
-                            NoteModel currentNote = displayedNotes[index];
-                            return Padding(
-                              padding: const EdgeInsets.only(
-                                  left: 8.0, right: 8.0, top: 0, bottom: 0),
-                              child: buildNoteCard(context,
-                                  currentLocationValue, index, currentNote),
-                            );
-                          },
-                        ),
-                      ),
-                    )
-                  ]
                 ],
-              ),
+                if (searchController.text.isNotEmpty &&
+                    filteredNotes.isEmpty) ...[
+                  const Expanded(
+                      child: Center(
+                    child: Text(
+                      'No notes found as per the input entered by you.',
+                    ),
+                  ))
+                ] else if (displayedNotes.isEmpty) ...[
+                  const Expanded(
+                      child: Center(
+                    child: Text("No Notes"),
+                  ))
+                ] else ...[
+                  Expanded(
+                    child: RefreshIndicator(
+                      onRefresh: () {
+                        return Future.delayed(const Duration(seconds: 1), () {
+                          startLocationMonitoring();
+                        });
+                      },
+                      child: ListView.builder(
+                        itemCount: displayedNotes.length,
+                        itemBuilder: (context, index) {
+                          NoteModel currentNote = displayedNotes[index];
+                          return Padding(
+                            padding: const EdgeInsets.only(
+                                left: 8.0, right: 8.0, top: 0, bottom: 0),
+                            child: buildNoteCard(context, currentLocationValue,
+                                index, currentNote),
+                          );
+                        },
+                      ),
+                    ),
+                  )
+                ]
+              ],
             ),
-          ],
+          ),
         ],
+        // ],
       ),
     );
   }
 
-  Widget buildNoteCard(BuildContext context, Position currentLocation,
+  Widget buildNoteCard(BuildContext context, LocationData currentLocation,
       int noteIndex, NoteModel note) {
     return GestureDetector(
         onLongPress: () {
@@ -346,7 +367,7 @@ class _LocationNoteViewState extends State<LocationNoteView> {
   }
 
   void navigateToNoteEdit(
-      BuildContext context, NoteModel note, Position currentLocation) {
+      BuildContext context, NoteModel note, LocationData currentLocation) {
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -354,7 +375,7 @@ class _LocationNoteViewState extends State<LocationNoteView> {
         builder: (context) => EditNoteView(noteKey: note.key, note: note),
       ),
     ).then((value) {
-      getNotes(currentLocation);
+      startLocationMonitoring();
     });
   }
 
@@ -389,7 +410,7 @@ class _LocationNoteViewState extends State<LocationNoteView> {
                   //     .refreshNotifier
                   //     .value = true;
                   notesKeys = [];
-                  didChangeDependencies();
+                  startLocationMonitoring();
 
                   Navigator.of(context).pop();
                 });

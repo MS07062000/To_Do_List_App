@@ -1,7 +1,9 @@
 import 'dart:developer';
-import 'package:geolocator/geolocator.dart';
+// import 'package:geolocator/geolocator.dart';
 import 'package:hive_flutter/adapters.dart';
+import 'package:location/location.dart';
 import 'package:path_provider/path_provider.dart' as path_provider;
+import 'dart:math' show atan2, cos, pi, sin, sqrt;
 part 'note_model.g.dart';
 
 @HiveType(typeId: 0)
@@ -171,18 +173,72 @@ Future<void> setDeleteOfAllSelectedNote(List<dynamic> noteKeys) async {
   }
 }
 
-Future<List<NoteModel>> findNotesFromDestination(Position currentLocation,
+// Future<List<NoteModel>> findNotesFromDestination(Position currentLocation,
+//     double maxDistance, bool isUsedForNotification) async {
+//   Hive.close().catchError((onError) {
+//     log(onError);
+//   });
+//   await initializeHive();
+//   await registerHiveAdapters();
+
+//   final noteBox = await Hive.openBox<NoteModel>('notes');
+//   // Get the latitude and longitude of the current location
+//   double currentLatitude = currentLocation.latitude;
+//   double currentLongitude = currentLocation.longitude;
+
+//   // Filter the notes based on the distance from the current location
+//   List<NoteModel> filteredNotes = noteBox.values.where((note) {
+//     // log(note.key.toString());
+//     // log(note.destination);
+//     if (isUsedForNotification) {
+//       log("${note.notetitle} ${note.isDelete} ${note.isNotified}");
+//     }
+
+//     double noteLatitude = double.parse(note.destination.split(',')[0]);
+//     double noteLongitude =
+//         double.parse(note.destination.split(',')[1]); //note.destination;
+
+//     // Calculate the distance between the current location and note's destination
+//     double distanceInMeters = Geolocator.distanceBetween(
+//       currentLatitude,
+//       currentLongitude,
+//       noteLatitude,
+//       noteLongitude,
+//     );
+
+//     // Filter the notes within the maximum distance
+//     if (isUsedForNotification) {
+//       return distanceInMeters <= maxDistance &&
+//           !note.isDelete &&
+//           !note.isNotified;
+//     } else {
+//       return distanceInMeters <= maxDistance && !note.isDelete;
+//     }
+//   }).toList();
+//   return (filteredNotes);
+// }
+
+Future<void> setNotified(noteKey) async {
+  await initializeHive();
+  await registerHiveAdapters();
+  final noteBox = await Hive.openBox<NoteModel>('notes');
+  NoteModel? note = noteBox.get(noteKey);
+  note!.isNotified = true;
+  await noteBox.put(noteKey, note);
+}
+
+Future<List<NoteModel>> findNotesFromDestination(LocationData currentLocation,
     double maxDistance, bool isUsedForNotification) async {
   Hive.close().catchError((onError) {
-    print(onError);
+    log(onError);
   });
   await initializeHive();
   await registerHiveAdapters();
 
   final noteBox = await Hive.openBox<NoteModel>('notes');
   // Get the latitude and longitude of the current location
-  double currentLatitude = currentLocation.latitude;
-  double currentLongitude = currentLocation.longitude;
+  double? currentLatitude = currentLocation.latitude;
+  double? currentLongitude = currentLocation.longitude;
 
   // Filter the notes based on the distance from the current location
   List<NoteModel> filteredNotes = noteBox.values.where((note) {
@@ -197,9 +253,9 @@ Future<List<NoteModel>> findNotesFromDestination(Position currentLocation,
         double.parse(note.destination.split(',')[1]); //note.destination;
 
     // Calculate the distance between the current location and note's destination
-    double distanceInMeters = Geolocator.distanceBetween(
-      currentLatitude,
-      currentLongitude,
+    double distanceInMeters = calculateDistance(
+      currentLatitude!,
+      currentLongitude!,
       noteLatitude,
       noteLongitude,
     );
@@ -216,11 +272,23 @@ Future<List<NoteModel>> findNotesFromDestination(Position currentLocation,
   return (filteredNotes);
 }
 
-Future<void> setNotified(noteKey) async {
-  await initializeHive();
-  await registerHiveAdapters();
-  final noteBox = await Hive.openBox<NoteModel>('notes');
-  NoteModel? note = noteBox.get(noteKey);
-  note!.isNotified = true;
-  await noteBox.put(noteKey, note);
+double calculateDistance(double lat1, double lon1, double lat2, double lon2) {
+  const double earthRadius = 6371; // in kilometers
+
+  double dLat = _toRadians(lat2 - lat1);
+  double dLon = _toRadians(lon2 - lon1);
+
+  double a = sin(dLat / 2) * sin(dLat / 2) +
+      cos(_toRadians(lat1)) *
+          cos(_toRadians(lat2)) *
+          sin(dLon / 2) *
+          sin(dLon / 2);
+  double c = 2 * atan2(sqrt(a), sqrt(1 - a));
+
+  double distance = earthRadius * c;
+  return distance * 1000; // convert to meters
+}
+
+double _toRadians(double degrees) {
+  return degrees * (pi / 180);
 }

@@ -1,14 +1,13 @@
-// import 'dart:async';
-// import 'dart:developer';
-// import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:to_do_list_app/AddNoteScreen/add_new_note_view.dart';
+import 'package:to_do_list_app/Helper/connectivity_handler.dart';
 // import 'package:to_do_list_app/Database/duplicate_data.dart';
 import 'package:to_do_list_app/HomeScreen/home_view.dart';
 // import 'package:to_do_list_app/LocationNotesScreen/get_current_location.dart';
 import 'package:to_do_list_app/LocationNotesScreen/location_view.dart';
 import 'package:to_do_list_app/Main/bottom_navbar_provider.dart';
+import 'package:to_do_list_app/Notifications/notes_notification.dart';
 // import 'package:to_do_list_app/Notifications/notes_notification.dart';
 import 'package:to_do_list_app/TrashScreen/trash_view.dart';
 
@@ -26,9 +25,14 @@ class _MyHomePageState extends State<MyHomePage> {
     const AddNewNoteView(),
     const TrashView()
   ];
+
+  ConnectivityCheck connectivityCheck = ConnectivityCheck();
+
   @override
   void initState() {
     super.initState();
+    connectivityCheck.startStreamSubscription(context);
+    LocationNotificationHelper();
     // Timer.periodic(const Duration(minutes: 2), (timer) async {
     //   var connectivityResult = await (Connectivity().checkConnectivity());
     //   bool locationServices = await locationPermissionAndServicesEnabled();
@@ -43,6 +47,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   void dispose() {
+    connectivityCheck.stopStreamSubscription();
     super.dispose();
   }
 
