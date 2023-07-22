@@ -179,8 +179,8 @@ class _LocationNoteViewState extends State<LocationNoteView> {
                               Expanded(child: selectAllContainer()),
                             ],
                           ),
-                        noteListContainer()
                       ],
+                      noteListContainer()
                     ],
                   ),
                 ),
